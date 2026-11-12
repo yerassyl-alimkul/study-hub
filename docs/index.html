@@ -1,11 +1,56 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
-<script>try{document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
+<script>
+/* тема: auto | light | dark, хранится в study-theme (синхронизируется с Telegram) */
+(function(){
+  var R=document.documentElement, m='auto';
+  try{m=localStorage.getItem('study-theme')||'auto'}catch(e){}
+  function sys(){var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData&&w.colorScheme) return w.colorScheme; return (window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}
+  function apply(){
+    var r=m==='auto'?sys():m; R.setAttribute('data-theme',r); R.style.colorScheme=r;
+    var b=document.querySelector('.themebtn'); if(b){b.textContent=m==='auto'?'◐':(m==='dark'?'☾':'☀'); b.title={auto:'Тема: авто',light:'Тема: светлая',dark:'Тема: тёмная'}[m]; b.setAttribute('aria-label',b.title)}
+    try{var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData){w.setHeaderColor&&w.setHeaderColor(r==='dark'?'#121315':'#FBFBFA'); w.setBackgroundColor&&w.setBackgroundColor(r==='dark'?'#121315':'#FBFBFA')}}catch(e){}
+  }
+  window.__theme={get:function(){return m},apply:apply,cycle:function(){m=m==='auto'?'light':(m==='light'?'dark':'auto'); try{localStorage.setItem('study-theme',m)}catch(e){} apply()}};
+  apply();
+  function mount(){
+    apply();
+    if(document.querySelector('.themebtn')) return;
+    var anchor=document.querySelector('[data-langsw]'); if(!anchor) return;
+    var b=document.createElement('button'); b.type='button'; b.className='themebtn'; b.onclick=function(){window.__theme.cycle()};
+    anchor.parentNode.insertBefore(b,anchor); apply();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+  window.addEventListener('load',apply);
+  try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',apply)}catch(e){}
+  /* если Telegram подтянул более новый study-theme из облака, страница перезагрузится синхронизацией */
+})();
+</script>
+<style id="theme-fix">
+.themebtn{font:600 15px/1 system-ui,sans-serif;width:34px;height:34px;border-radius:50%;border:1px solid var(--line,var(--edge,#E6E6E1));background:var(--card,var(--board,#fff));color:var(--ink,#17181C);cursor:pointer;flex:none;padding:0}
+.themebtn:hover{border-color:#557546}
+/* логотип B */
+.lgB{display:flex;flex-direction:column;line-height:1;gap:5px}
+.lgB .w{font:600 19px/1 Unbounded,sans-serif;letter-spacing:-.01em;color:var(--ink,#17181C);white-space:nowrap}
+.lgB .w i{font-style:normal;color:#557546}
+.lgB .w u{display:inline-block;width:6px;height:6px;border-radius:50%;background:#E2D47E;margin-left:3px;text-decoration:none}
+.lgB .s{display:flex;align-items:center;gap:6px;font:600 9px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted,#5D5F69);white-space:nowrap}
+.lgB .s s{display:block;width:18px;height:1.5px;background:#557546;text-decoration:none}
+:root[data-theme="dark"] .lgB .w i,:root[data-theme="dark"] .lgB .s s{color:#8DB57B;background:#8DB57B}
+:root[data-theme="dark"] .lgB .w i{background:none}
+/* пастельные плашки в тёмной теме: локально светлая палитра, чтобы графики читались */
+:root[data-theme="dark"] .ex,:root[data-theme="dark"] .tint-yel,:root[data-theme="dark"] .tint-blue,:root[data-theme="dark"] .tint-mint,:root[data-theme="dark"] .short + .board{
+ --ink:#17181C;--muted:#3b3d46;--line:rgba(23,24,28,.22);--edge:rgba(23,24,28,.22);--grid:rgba(23,24,28,.2);--iso:rgba(23,24,28,.2);
+ --soft:rgba(255,255,255,.45);--card:#FFFFFF;--bg:#FBFBFA;--paper:rgba(255,255,255,.5);
+ --green:#3F5F33;--blue:#3F5F33;--marker:#8A6A00;--violet:#3F6C96;--ok:#2F5A26;--bad:#A33626;--ok-soft:#E4EDDF;--bad-soft:#F6E3DF;--hi:#FFF3A0;color-scheme:light;color:#17181C}
+:root[data-theme="dark"] .short + .board{--board:#E2D47E}
+:root[data-theme="dark"] .ex .controls label,:root[data-theme="dark"] .ex p,:root[data-theme="dark"] .ex li{color:#17181C}
+</style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 /* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
 (function(){
-  var BOT_URL='';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
+  var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
   var PFX=/^(imsds-|mmmds-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
   var inTg=!!(tg&&tg.initData);
   var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
@@ -88,9 +133,11 @@ h1{font:600 clamp(28px,5vw,44px)/1.1 Unbounded,sans-serif;margin:10px 0 8px}h1 e
 .c{display:flex;flex-direction:column;gap:10px;border-radius:26px;padding:26px;color:#17181C;text-decoration:none;min-height:230px;transition:transform .15s}
 .c:hover{transform:translateY(-3px)}.c .k{font:600 12px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
 .c h2{font:600 24px/1.2 Unbounded,sans-serif;margin:0}.c p{margin:0;opacity:.85}.c .st{margin-top:auto;font:600 14px Onest;display:flex;justify-content:space-between;align-items:center}
+:root[data-theme="dark"]{--bg:#121315;--ink:#F1F1EE;--muted:#A5A7B0;--line:#2C2E34;--green:#8DB57B;--card:#1B1C20}
+.c{--ink:#17181C}
 .bar{height:6px;border-radius:3px;background:rgba(23,24,28,.15);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:#17181C;width:0}
 </style></head><body>
-<header><a class="brand" href="index.html"><svg width="32" height="32" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="12" fill="#557546"/><path d="M17 11 V27 Q17 35 10 35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 11 L33 22 L40 11 M33 22 V35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bt"><b>JulYera</b><small>study hub</small></span></a>
+<header><a class="brand" href="index.html" aria-label="JulYera study hub"><span class="lgB"><span class="w">Jul<i>Y</i>era<u></u></span><span class="s"><s></s>study hub</span></span></a>
 <span class="lang" data-langsw><button data-l="ru" aria-pressed="true">RU</button><button data-l="en" aria-pressed="false">EN</button></span></header>
 <main>
 <div class="tag" data-ru="Магистратура · Data Science, Мессина" data-en="MSc Data Science · Messina"></div>
