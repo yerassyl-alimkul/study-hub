@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JulYera · Study Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FBFBFA;--ink:#17181C;--muted:#5D5F69;--line:#E6E6E1;--green:#557546;--card:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#121316;--ink:#F2F2EE;--muted:#A3A5AE;--line:#2A2C33;--card:#1A1B20;--green:#8DB57B}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Onest,system-ui,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font:600 16px Unbounded,sans-serif;color:var(--ink);text-decoration:none}
+.brand span{color:var(--muted);font-weight:500}
+nav{display:flex;gap:4px;background:#17181C;border-radius:999px;padding:4px;margin:0 auto}
+nav button{border:0;background:none;color:#cfd0d6;font:500 14px Onest,sans-serif;padding:8px 16px;border-radius:999px;cursor:pointer}
+nav button[aria-pressed=true]{background:#fff;color:#17181C}
+.right{display:flex;gap:10px;align-items:center}
+.right a{font:500 14px Onest;color:var(--ink);text-decoration:none;border:1px solid var(--line);padding:8px 14px;border-radius:14px;background:var(--card)}
+.right a:hover{border-color:var(--green);color:var(--green)}
+main{flex:1;min-height:0;position:relative}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+#fallback{display:none;padding:40px 20px;text-align:center}
+@media(max-width:700px){nav{order:3;width:100%;margin:0}nav button{flex:1}}
+</style></head><body>
+<header>
+<a class="brand" href="#imsds"><svg width="32" height="32" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="12" fill="#557546"/><path d="M17 11 V27 Q17 35 10 35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 11 L33 22 L40 11 M33 22 V35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>JulYera<span> Study Hub</span></b></a>
+<nav aria-label="Предметы"><button data-s="imsds" aria-pressed="true">IMSDS Studio</button><button data-s="mmds" aria-pressed="false">MMMDS Exam Studio</button></nav>
+<div class="right"><a href="https://t.me/julyera_bot" target="_blank" rel="noopener">Бот</a><a id="open" href="imsds.html" target="_blank">В отдельной вкладке</a></div>
+</header>
+<main><iframe id="fr" title="Обучалка" src="imsds.html"></iframe><div id="fallback">Встроенный просмотр не загрузился. Откройте обучалку <a id="fb" href="imsds.html" target="_blank">в отдельной вкладке</a>.</div></main>
+<script>
+const P={imsds:'imsds.html',mmds:'mmds.html'};const fr=document.getElementById('fr');
+function go(s){if(!P[s])s='imsds';fr.src=P[s];document.getElementById('open').href=P[s];document.getElementById('fb').href=P[s];document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s));try{localStorage.setItem('hub-last',s)}catch(e){}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.s});
+window.addEventListener('hashchange',()=>go(location.hash.slice(1)));
+let s=location.hash.slice(1);if(!s){try{s=localStorage.getItem('hub-last')}catch(e){}}go(s||'imsds');
+</script></body></html>
