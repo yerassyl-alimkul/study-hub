@@ -2695,7 +2695,23 @@ function ui(){
     pop.style.display=pop.style.display==='block'?'none':'block'; if(!wd){ wd=true; widget(); } };
 }
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') push(); });
-function init(){ ui(); var a=auth(); if(a) pull(a); }
+function openWeb(){
+  var base=location.href.split('#')[0].replace(/[^\/]*$/,'')+'index.html';
+  var go=function(h){ var u=base+(h?'#jh='+encodeURIComponent(h):''); if(tg&&tg.openLink) tg.openLink(u); else window.open(u,'_blank'); };
+  call({auth:{initData:initData},action:'handoff'}).then(function(j){ go(j.ok?j.handoff:''); }).catch(function(){ go(''); });
+}
+function webBtn(){
+  if(!initData) return;
+  var b=document.createElement('button'); b.type='button'; b.className='themebtn'; b.textContent='↗'; b.title=lang()==='en'?'Open in browser':'Открыть в браузере'; b.setAttribute('aria-label',b.title); b.onclick=openWeb;
+  var an=document.querySelector('[data-langsw]');
+  if(an&&an.parentNode) an.parentNode.insertBefore(b,an); else { b.style.cssText='position:fixed;right:14px;bottom:14px;z-index:99999'; document.body.appendChild(b); }
+}
+function init(){
+  var m=/[#&]jh=([^&]+)/.exec(location.hash||'');
+  if(m&&!initData){ try{history.replaceState(null,'',location.pathname+location.search)}catch(e){} sessionStorage.removeItem('jy-srv-r'); ui(); pull({handoff:decodeURIComponent(m[1])}); return; }
+  ui(); var a=auth(); if(a) pull(a);
+  if(initData) setTimeout(webBtn,400);
+}
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
