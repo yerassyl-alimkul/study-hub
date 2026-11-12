@@ -2642,5 +2642,62 @@ window.__i18n={key,setLang,get lang(){return lang;},walk};
 })();
 </script>
 
+<script id="jy-srv">(function(){
+var URL_='https://sffknvpnbrgwmtlcouge.supabase.co/functions/v1/study-sync';
+var PFX=/^(imsds-|mmmds-|aacm-|study-)/;
+var LS=window.localStorage, origSet=Storage.prototype.setItem;
+var tg=window.Telegram&&Telegram.WebApp, initData=tg&&tg.initData||'';
+var token=''; try{token=LS.getItem('jy-token')||''}catch(e){}
+var user=null, timer=null, ready=false;
+function lang(){try{return LS.getItem('study-lang')==='en'?'en':'ru'}catch(e){return 'ru'}}
+var T={ru:{login:'Войти через Telegram',out:'Выйти из аккаунта?',cap:'Нажми кнопку Telegram ниже — прогресс будет общим с ботом',off:'Сервер недоступен'},en:{login:'Sign in with Telegram',out:'Sign out?',cap:'Use the Telegram button below — progress will be shared with the bot',off:'Server unavailable'}};
+function t(k){return T[lang()][k]}
+function auth(extra){ if(initData) return {initData:initData}; if(token) return {token:token}; return extra||null; }
+function call(body){ return fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive:true}).then(function(r){return r.json().then(function(j){j._s=r.status;return j})}); }
+function ts(k){ try{return +LS.getItem('__sts_'+k)||0}catch(e){return 0} }
+function keys(){ var o=[]; for(var i=0;i<LS.length;i++){var k=LS.key(i); if(PFX.test(k)) o.push(k);} return o; }
+var known={}; // server ts per key
+function collect(){ var it={},n=0; keys().forEach(function(k){ var l=ts(k)||1; if(l>(known[k]||0)){ it[k]={v:LS.getItem(k),ts:l}; n++; } }); return n?it:null; }
+function push(){ var a=auth(); if(!a||!ready) return Promise.resolve(); var it=collect(); if(!it) return Promise.resolve();
+  return call({auth:a,action:'put',items:it}).then(function(j){ if(j.ok) for(var k in it) known[k]=it[k].ts; }).catch(function(){}); }
+function sched(){ clearTimeout(timer); timer=setTimeout(push,1500); }
+Storage.prototype.setItem=function(k,v){ origSet.apply(this,arguments); if(this===LS&&PFX.test(k)){ origSet.call(LS,'__sts_'+k,String(Date.now())); sched(); } };
+function pull(a){
+  return call({auth:a,action:'get'}).then(function(j){
+    if(!j.ok){ if(j._s===401&&token&&!initData){ try{LS.removeItem('jy-token')}catch(e){} token=''; } throw 0; }
+    if(j.token){ token=j.token; origSet.call(LS,'jy-token',token); }
+    user=j.user; ready=true; var changed=false;
+    for(var k in (j.items||{})){ var s=j.items[k]; known[k]=s.ts; if(s.ts>ts(k)){ if(LS.getItem(k)!==s.v){ origSet.call(LS,k,s.v); changed=true; } origSet.call(LS,'__sts_'+k,String(s.ts)); } }
+    render();
+    if(changed&&!sessionStorage.getItem('jy-srv-r')){ sessionStorage.setItem('jy-srv-r','1'); location.reload(); return; }
+    push();
+  }).catch(function(){ render(); });
+}
+var chip,pop;
+function css(){ var s=document.createElement('style'); s.textContent='#jy-chip{position:fixed;right:14px;bottom:14px;z-index:99999;font:600 12px Onest,system-ui,sans-serif;padding:8px 13px;border-radius:999px;border:1px solid rgba(128,128,128,.35);background:#1b1d1b;color:#e9ece6;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25)}#jy-chip.ok{border-color:#7fb069}#jy-pop{position:fixed;right:14px;bottom:56px;z-index:99999;width:260px;padding:14px;border-radius:14px;border:1px solid rgba(128,128,128,.35);background:#1b1d1b;color:#e9ece6;font:500 12px Onest,system-ui,sans-serif;display:none}#jy-pop p{margin:0 0 10px}'; document.head.appendChild(s); }
+function render(){
+  if(!chip) return;
+  if(user){ chip.className='ok'; chip.textContent='✓ '+user.name; }
+  else if(initData){ chip.style.display='none'; }
+  else { chip.className=''; chip.textContent='⎆ '+t('login'); }
+}
+function widget(){
+  pop.innerHTML='<p>'+t('cap')+'</p>'; var sc=document.createElement('script'); sc.async=true; sc.src='https://telegram.org/js/telegram-widget.js?22';
+  sc.setAttribute('data-telegram-login','dsstudyhub_bot'); sc.setAttribute('data-size','medium'); sc.setAttribute('data-onauth','jySrvAuth(user)'); sc.setAttribute('data-request-access','write'); pop.appendChild(sc);
+}
+window.jySrvAuth=function(u){ pop.style.display='none'; sessionStorage.removeItem('jy-srv-r'); pull({widget:u}); };
+function ui(){
+  if(initData) return; css();
+  chip=document.createElement('button'); chip.id='jy-chip'; pop=document.createElement('div'); pop.id='jy-pop';
+  document.body.appendChild(pop); document.body.appendChild(chip); render();
+  var wd=false;
+  chip.onclick=function(){ if(user){ if(confirm(t('out'))){ try{LS.removeItem('jy-token')}catch(e){} token=''; user=null; ready=false; render(); } return; }
+    pop.style.display=pop.style.display==='block'?'none':'block'; if(!wd){ wd=true; widget(); } };
+}
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') push(); });
+function init(){ ui(); var a=auth(); if(a) pull(a); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
 </body>
 </html>
