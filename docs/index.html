@@ -63,7 +63,7 @@
     function mk(){ var d=document.createElement('div'); d.id='gate'; d.innerHTML='<div><b>JulYera study hub</b><p>Обучалки открываются только через Telegram-бота: так прогресс привязан к твоему аккаунту.</p>'+(BOT_URL?'<a href="'+BOT_URL+'">Открыть бота</a>':'')+'</div>'; document.body.appendChild(d); document.body.style.overflow='hidden'; }
     if(document.body) mk(); else document.addEventListener('DOMContentLoaded',mk);
   }
-  gate();
+  /* gate() отключён: сайт открывается и без бота, прогресс хранится в браузере, в Telegram синхронизируется */
   if(!inTg) return;
   try{ tg.ready(); tg.expand(); }catch(e){}
   var cs=tg.CloudStorage, timers={};
