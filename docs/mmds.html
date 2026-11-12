@@ -53,7 +53,7 @@
 /* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
 (function(){
   var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
-  var PFX=/^(imsds-|mmmds-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var PFX=/^(imsds-|mmmds-|aacm-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
   var inTg=!!(tg&&tg.initData);
   var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
   var origSet=Storage.prototype.setItem;
@@ -556,7 +556,7 @@ h1 em{font-style:normal!important;font-weight:inherit!important}
     <a class="course" style="background:#A9C89D" href="#home">MMMDS</a>
     <b id="topTitle" hidden></b>
     <nav class="pill" id="pill" aria-label="Разделы"></nav>
-    <a class="swapapp" href="imsds.html">IMSDS ⇄</a>
+    <a class="swapapp" href="imsds.html">IMSDS ⇄</a><a class="swapapp" href="aacm.html">AACM ⇄</a>
     <span class="lang" data-langsw><button data-l="en">EN</button><button data-l="ru">RU</button></span>
   </header>
   <nav class="side" id="side" aria-label="Темы"></nav>

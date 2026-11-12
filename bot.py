@@ -15,7 +15,7 @@ STATE: dict[int, dict] = {}  # user_id -> {"score":int,"n":int,"q":dict}
 def app_kb():
     wa = lambda t, p: InlineKeyboardButton(text=t, web_app=WebAppInfo(url=f"{URL}/{p}"))
     return InlineKeyboardMarkup(inline_keyboard=[
-        [wa("IMSDS Studio", "imsds.html")], [wa("MMMDS Exam Studio", "mmds.html")],
+        [wa("IMSDS Studio", "imsds.html")], [wa("MMMDS Exam Studio", "mmds.html")], [wa("AACM Studio", "aacm.html")],
         [wa("Оба в одном окне", "index.html")],
         [InlineKeyboardButton(text="Квиз IMSDS в чате", callback_data="quiz")]])
 
@@ -26,6 +26,11 @@ async def start(m: Message):
 @dp.message(Command("imsds"))
 async def c_imsds(m: Message):
     await m.answer("IMSDS Studio", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=f"{URL}/imsds.html"))]]))
+
+@dp.message(Command("aacm"))
+async def c_aacm(m: Message):
+    await m.answer("AACM Studio (Advanced Algorithms)", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=f"{URL}/aacm.html"))]]))
+
 
 @dp.message(Command("mmds"))
 async def c_mmds(m: Message):
@@ -67,7 +72,7 @@ async def c_oral(m: Message):
 
 async def main():
     await bot.set_my_commands([BotCommand(command="start", description="Открыть учебный хаб"), BotCommand(command="imsds", description="IMSDS Studio"),
-        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
+        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="aacm", description="AACM Studio"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
     await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="Учёба", web_app=WebAppInfo(url=f"{URL}/index.html")))
     await dp.start_polling(bot)
 

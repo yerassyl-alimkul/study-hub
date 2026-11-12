@@ -53,7 +53,7 @@
 /* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
 (function(){
   var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
-  var PFX=/^(imsds-|mmmds-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var PFX=/^(imsds-|mmmds-|aacm-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
   var inTg=!!(tg&&tg.initData);
   var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
   var origSet=Storage.prototype.setItem;
@@ -382,7 +382,7 @@ html[data-lang="en"] .l-ru,html[data-lang="ru"] .l-en{display:none!important}
     <a class="brand" href="index.html" aria-label="JulYera study hub"><span class="lgB"><span class="w">Jul<i>Y</i>era<u></u></span><span class="s"><s></s>study hub</span></span></a>
     <a class="course" style="background:#E2D47E" href="#home">IMSDS</a>
     <nav class="pill" id="pill" aria-label="Разделы"></nav>
-    <a class="swapapp" href="mmds.html">MMMDS ⇄</a>
+    <a class="swapapp" href="mmds.html">MMMDS ⇄</a><a class="swapapp" href="aacm.html">AACM ⇄</a>
     <span class="lang" id="langsw" data-langsw><button data-l="ru" aria-pressed="true">RU</button><button data-l="en" aria-pressed="false">EN</button></span>
   </header>
   <nav class="side" id="side" aria-label="Уроки"></nav>

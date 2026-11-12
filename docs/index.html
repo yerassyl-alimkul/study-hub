@@ -51,7 +51,7 @@
 /* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
 (function(){
   var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
-  var PFX=/^(imsds-|mmmds-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var PFX=/^(imsds-|mmmds-|aacm-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
   var inTg=!!(tg&&tg.initData);
   var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
   var origSet=Storage.prototype.setItem;
@@ -146,6 +146,7 @@ h1{font:600 clamp(28px,5vw,44px)/1.1 Unbounded,sans-serif;margin:10px 0 8px}h1 e
 <div class="grid">
 <a class="c" style="background:#E2D47E" href="imsds.html"><span class="k">IMSDS · Prof. Mondello</span><h2>Integrated Management Systems</h2><p data-ru="15 уроков, тренажёр на 86 вопросов, устные, шпаргалка." data-en="15 lessons, 86-question trainer, oral questions, cheat sheet."></p><div class="st"><span id="p1">0/15</span><span>→</span></div><div class="bar"><i id="b1"></i></div></a>
 <a class="c" style="background:#A9C89D" href="mmds.html"><span class="k">MMMDS · Prof. Gorgone</span><h2>Mathematical Models</h2><p data-ru="21 тема, генераторы задач, мок-экзамены, устные вопросы." data-en="21 topics, problem generators, mock exams, oral questions."></p><div class="st"><span id="p2">0/21</span><span>→</span></div><div class="bar"><i id="b2"></i></div></a>
+<a class="c" style="background:#DCE5FB" href="aacm.html"><span class="k">AACM · Advanced Algorithms</span><h2>Algorithms &amp; Computational Models</h2><p data-ru="15 тем, ответы E1–E15, тренажёр кода (22 задачи), пробные экзамены." data-en="15 topics, model answers E1–E15, code trainer (22 tasks), mock exams. Russian only for now."></p><div class="st"><span id="p3">0/15</span><span>→</span></div><div class="bar"><i id="b3"></i></div></a>
 </div></main>
 <script>
 (function(){
@@ -154,8 +155,9 @@ h1{font:600 clamp(28px,5vw,44px)/1.1 Unbounded,sans-serif;margin:10px 0 8px}h1 e
  document.addEventListener('click',function(e){var b=e.target.closest('[data-langsw] [data-l]');if(b){lang=b.dataset.l;try{localStorage.setItem('study-lang',lang)}catch(x){}paint()}});
  paint();
  function cnt(k){try{var s=JSON.parse(localStorage.getItem(k)||'{}');return Object.keys(s.done||{}).filter(function(i){return s.done[i]}).length}catch(e){return 0}}
- var a=cnt('imsds-studio-v1'),b=cnt('mmmds-studio-v1');
+ var a=cnt('imsds-studio-v1'),b=cnt('mmmds-studio-v1'),c=cnt('aacm-studio-v1');
  document.getElementById('p1').textContent=a+'/15';document.getElementById('b1').style.width=(a/15*100)+'%';
  document.getElementById('p2').textContent=b+'/21';document.getElementById('b2').style.width=(b/21*100)+'%';
+ document.getElementById('p3').textContent=c+'/15';document.getElementById('b3').style.width=(c/15*100)+'%';
 })();
 </script></body></html>
