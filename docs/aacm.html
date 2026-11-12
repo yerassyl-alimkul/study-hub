@@ -2338,18 +2338,22 @@ function render(){
   else if(initData){ chip.style.display='none'; }
   else { chip.className=''; chip.textContent='⎆ '+t('login'); }
 }
-function widget(){
-  pop.innerHTML='<p>'+t('cap')+'</p>'; var sc=document.createElement('script'); sc.async=true; sc.src='https://telegram.org/js/telegram-widget.js?22';
-  sc.setAttribute('data-telegram-login','dsstudyhub_bot'); sc.setAttribute('data-size','medium'); sc.setAttribute('data-onauth','jySrvAuth(user)'); sc.setAttribute('data-request-access','write'); pop.appendChild(sc);
+var CID=9139684919;
+function loginLib(){ if(window.Telegram&&Telegram.Login||document.getElementById('jy-tglib')) return; var sc=document.createElement('script'); sc.id='jy-tglib'; sc.async=true; sc.src='https://telegram.org/js/telegram-login.js'; document.head.appendChild(sc); }
+function msg(txt){ pop.innerHTML='<p>'+txt+'</p>'; pop.style.display='block'; }
+function doLogin(){
+  if(!(window.Telegram&&Telegram.Login)){ loginLib(); msg(lang()==='en'?'Login is loading, try again in a second':'Вход загружается, нажми ещё раз через секунду'); return; }
+  pop.style.display='none';
+  Telegram.Login.auth({client_id:CID,scope:['profile'],lang:lang()},function(r){
+    if(!r||r.error||!r.id_token){ if(r&&r.error==='popup_closed') return; msg((lang()==='en'?'Login failed: ':'Не удалось войти: ')+((r&&r.error)||'?')); return; }
+    sessionStorage.removeItem('jy-srv-r'); pull({idToken:r.id_token});
+  });
 }
-window.jySrvAuth=function(u){ pop.style.display='none'; sessionStorage.removeItem('jy-srv-r'); pull({widget:u}); };
 function ui(){
-  if(initData) return; css();
+  if(initData) return; css(); loginLib();
   chip=document.createElement('button'); chip.id='jy-chip'; pop=document.createElement('div'); pop.id='jy-pop';
   document.body.appendChild(pop); document.body.appendChild(chip); render();
-  var wd=false;
-  chip.onclick=function(){ if(user){ if(confirm(t('out'))){ try{LS.removeItem('jy-token')}catch(e){} token=''; user=null; ready=false; render(); } return; }
-    pop.style.display=pop.style.display==='block'?'none':'block'; if(!wd){ wd=true; widget(); } };
+  chip.onclick=function(){ if(user){ if(confirm(t('out'))){ try{LS.removeItem('jy-token')}catch(e){} token=''; user=null; ready=false; render(); } return; } doLogin(); };
 }
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') push(); });
 function openWeb(){
