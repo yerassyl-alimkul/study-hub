@@ -27,6 +27,11 @@ async def start(m: Message):
 async def c_imsds(m: Message):
     await m.answer("IMSDS Studio", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=f"{URL}/imsds.html"))]]))
 
+@dp.message(Command("link"))
+async def c_link(m: Message):
+    await m.answer("Ссылка на бота (её можно отправить кому угодно): https://t.me/dsstudyhub_bot\n\nСайт открывается только внутри Telegram: нажмите кнопку «Меню» слева от поля ввода или /start.")
+
+
 @dp.message(Command("aacm"))
 async def c_aacm(m: Message):
     await m.answer("AACM Studio (Advanced Algorithms)", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=f"{URL}/aacm.html"))]]))
@@ -72,7 +77,7 @@ async def c_oral(m: Message):
 
 async def main():
     await bot.set_my_commands([BotCommand(command="start", description="Открыть учебный хаб"), BotCommand(command="imsds", description="IMSDS Studio"),
-        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="aacm", description="AACM Studio"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
+        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="aacm", description="AACM Studio"), BotCommand(command="link", description="Ссылка на бота"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
     await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="Учёба", web_app=WebAppInfo(url=f"{URL}/index.html")))
     await dp.start_polling(bot)
 
