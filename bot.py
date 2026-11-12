@@ -16,20 +16,35 @@ def app_kb():
     wa = lambda t, p: InlineKeyboardButton(text=t, web_app=WebAppInfo(url=f"{URL}/{p}"))
     return InlineKeyboardMarkup(inline_keyboard=[
         [wa("IMSDS Studio", "imsds.html")], [wa("MMMDS Exam Studio", "mmds.html")], [wa("AACM Studio", "aacm.html")],
-        [wa("Оба в одном окне", "index.html")],
+        [wa("Все предметы в одном окне", "index.html")],
+        [InlineKeyboardButton(text="🌐 Открыть сайт в браузере", url=f"{URL}/index.html")],
         [InlineKeyboardButton(text="Квиз IMSDS в чате", callback_data="quiz")]])
 
 @dp.message(CommandStart())
 async def start(m: Message):
-    await m.answer("Учебный хаб: IMSDS и MMMDS. Выбери, что открыть.", reply_markup=app_kb())
+    await m.answer("JulYera study hub: IMSDS, MMMDS и AACM.\n\nВыбери предмет кнопкой ниже. Как пользоваться, в том числе сайтом в браузере и переносом прогресса: /help", reply_markup=app_kb())
 
 @dp.message(Command("imsds"))
 async def c_imsds(m: Message):
     await m.answer("IMSDS Studio", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=f"{URL}/imsds.html"))]]))
 
+HELP = (
+    "Как это работает\n\n"
+    "1. В Telegram: кнопка «Учёба» слева от поля ввода или /start открывает хаб прямо в чате. "
+    "Прогресс и язык сохраняются на твой аккаунт автоматически.\n\n"
+    "2. В браузере (ноутбук, другой телефон): открой " + URL + "/index.html и нажми «Войти через Telegram» в правом нижнем углу. "
+    "Прогресс подтянется сам.\n\n"
+    "3. Быстрее всего: в Mini App в шапке есть кнопка ↗. Она открывает сайт в браузере уже под твоим аккаунтом, без входа.\n\n"
+    "Прогресс общий везде: что отметил в боте, видно на сайте, и наоборот. Язык RU/EN переключается в шапке.\n\n"
+    "Команды: /imsds /mmds /aacm /quiz /oral /link")
+
+@dp.message(Command("help"))
+async def c_help(m: Message):
+    await m.answer(HELP, disable_web_page_preview=True)
+
 @dp.message(Command("link"))
 async def c_link(m: Message):
-    await m.answer("Ссылка на бота (её можно отправить кому угодно): https://t.me/dsstudyhub_bot\n\nСайт открывается только внутри Telegram: нажмите кнопку «Меню» слева от поля ввода или /start.")
+    await m.answer("Сайт (открывается в любом браузере): " + URL + "/index.html\n\nЧтобы прогресс был тот же, что в боте, нажми на сайте «Войти через Telegram» или открой его из бота кнопкой ↗ в шапке.\n\nСсылка на бота: https://t.me/dsstudyhub_bot", disable_web_page_preview=True)
 
 
 @dp.message(Command("aacm"))
@@ -77,7 +92,7 @@ async def c_oral(m: Message):
 
 async def main():
     await bot.set_my_commands([BotCommand(command="start", description="Открыть учебный хаб"), BotCommand(command="imsds", description="IMSDS Studio"),
-        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="aacm", description="AACM Studio"), BotCommand(command="link", description="Ссылка на бота"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
+        BotCommand(command="mmds", description="MMMDS Exam Studio"), BotCommand(command="aacm", description="AACM Studio"), BotCommand(command="help", description="Как пользоваться"), BotCommand(command="link", description="Ссылка на сайт"), BotCommand(command="quiz", description="Квиз IMSDS в чате"), BotCommand(command="oral", description="Устный вопрос")])
     await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="Учёба", web_app=WebAppInfo(url=f"{URL}/index.html")))
     await dp.start_polling(bot)
 
