@@ -2,6 +2,72 @@
 <html lang="ru" data-lang="ru">
 <head>
 <meta charset="utf-8">
+<script>try{document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
+(function(){
+  var BOT_URL='';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
+  var PFX=/^(imsds-|mmmds-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var inTg=!!(tg&&tg.initData);
+  var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
+  var origSet=Storage.prototype.setItem;
+  function gate(){
+    if(inTg||dev) return;
+    var s=document.createElement('style');
+    s.textContent='#gate{position:fixed;inset:0;z-index:99999;background:#FBFBFA;color:#17181C;display:grid;place-items:center;padding:24px;text-align:center;font:16px/1.5 Onest,system-ui,sans-serif}#gate b{display:block;font:600 22px Unbounded,sans-serif;margin-bottom:10px}#gate p{max-width:34ch;margin:0 auto 18px;color:#5D5F69}#gate a{display:inline-block;background:#557546;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600}';
+    document.head.appendChild(s);
+    function mk(){ var d=document.createElement('div'); d.id='gate'; d.innerHTML='<div><b>JulYera study hub</b><p>Обучалки открываются только через Telegram-бота: так прогресс привязан к твоему аккаунту.</p>'+(BOT_URL?'<a href="'+BOT_URL+'">Открыть бота</a>':'')+'</div>'; document.body.appendChild(d); document.body.style.overflow='hidden'; }
+    if(document.body) mk(); else document.addEventListener('DOMContentLoaded',mk);
+  }
+  gate();
+  if(!inTg) return;
+  try{ tg.ready(); tg.expand(); }catch(e){}
+  var cs=tg.CloudStorage, timers={};
+  function lsKeys(){ var o=[]; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(PFX.test(k)) o.push(k); } return o; }
+  function push(k){
+    var v=localStorage.getItem(k); if(v==null) return;
+    var ts=+localStorage.getItem('__ts_'+k)||Date.now(), n=Math.max(1,Math.ceil(v.length/CH));
+    for(var i=0;i<n;i++) cs.setItem(k+'_'+i, v.slice(i*CH,(i+1)*CH));
+    cs.setItem(k+'_m', JSON.stringify({n:n,ts:ts}));
+  }
+  Storage.prototype.setItem=function(k,v){
+    origSet.call(this,k,v);
+    if(this===localStorage && PFX.test(k) && k.indexOf('__ts_')!==0){
+      origSet.call(this,'__ts_'+k,String(Date.now()));
+      clearTimeout(timers[k]); timers[k]=setTimeout(function(){push(k)},1500);
+    }
+  };
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) lsKeys().forEach(push); });
+  cs.getKeys(function(err,keys){
+    if(err||!keys) return;
+    var metas=keys.filter(function(x){return /_m$/.test(x)}), left=metas.length, changed=false, seen={};
+    function finish(){
+      lsKeys().forEach(function(k){ if(!seen[k]) push(k); });
+      var done=false; try{ done=sessionStorage.getItem('synced')==='1'; }catch(e){}
+      if(changed && !done){ try{sessionStorage.setItem('synced','1');}catch(e){} location.reload(); }
+    }
+    if(!left) return finish();
+    metas.forEach(function(mk){
+      var k=mk.slice(0,-2); seen[k]=1;
+      cs.getItem(mk,function(e,mv){
+        var m={}; try{m=JSON.parse(mv)}catch(x){}
+        var lts=+localStorage.getItem('__ts_'+k)||0;
+        if(m.ts>lts && m.n){
+          var names=[]; for(var i=0;i<m.n;i++) names.push(k+'_'+i);
+          cs.getItems(names,function(e2,vals){
+            if(!e2&&vals){ var s=''; names.forEach(function(nm){ s+=vals[nm]||''; });
+              if(s && s!==localStorage.getItem(k)){ origSet.call(localStorage,k,s); changed=true; }
+              origSet.call(localStorage,'__ts_'+k,String(m.ts)); }
+            if(--left===0) finish();
+          });
+        } else { if(lts>m.ts) push(k); if(--left===0) finish(); }
+      });
+    });
+  });
+})();
+</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>IMSDS Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,17 +319,27 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 }
 html[data-lang="en"] .l-ru,html[data-lang="ru"] .l-en{display:none!important}
 </style>
+<style id="jy-hdr">
+.top .brand{gap:10px!important}
+.top .brand .bt{display:flex;flex-direction:column;line-height:1}
+.top .brand .bt b{font:600 17px/1 Unbounded,sans-serif!important;letter-spacing:-.01em;white-space:nowrap}
+.top .brand .bt small{font:600 9.5px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;color:#5D5F69;margin-top:5px;white-space:nowrap}
+.top .course{font:600 12px Onest,system-ui,sans-serif;padding:5px 11px;border-radius:999px;color:#17181C;text-decoration:none;white-space:nowrap}
+.top .swapapp{font:600 12px Onest,system-ui,sans-serif;color:#5D5F69;text-decoration:none;border:1px solid #E6E6E1;padding:6px 11px;border-radius:999px;white-space:nowrap;background:#fff}
+.top .swapapp:hover{color:#557546;border-color:#557546}
+</style>
 </head>
 <body>
 <div class="tip" id="tip"></div>
 <div class="app">
   <header class="top">
     <button id="menuBtn" aria-expanded="false" aria-controls="side">Уроки</button>
-    <a class="brand" href="#home" aria-label="IMSDS Studio, главная">
+    <a class="brand" href="index.html" aria-label="JulYera study hub">
       <svg width="32" height="32" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="12" fill="#557546"/><path d="M17 11 V27 Q17 35 10 35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 11 L33 22 L40 11 M33 22 V35" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <b>IMSDS<span> Studio</span></b>
-    </a>
+      <span class="bt"><b>JulYera</b><small>study hub</small></span></a>
+    <a class="course" style="background:#E2D47E" href="#home">IMSDS</a>
     <nav class="pill" id="pill" aria-label="Разделы"></nav>
+    <a class="swapapp" href="mmds.html">MMMDS ⇄</a>
     <span class="lang" id="langsw" data-langsw><button data-l="ru" aria-pressed="true">RU</button><button data-l="en" aria-pressed="false">EN</button></span>
   </header>
   <nav class="side" id="side" aria-label="Уроки"></nav>
