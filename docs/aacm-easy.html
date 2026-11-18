@@ -1,42 +1,190 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AACM · Лёгкий курс · JulYera study hub</title>
+<title>AACM · Easy course · JulYera study hub</title>
+<script>
+/* тема: auto | light | dark, хранится в study-theme (синхронизируется с Telegram) */
+(function(){
+  var R=document.documentElement, m='auto';
+  try{m=localStorage.getItem('study-theme')||'auto'}catch(e){}
+  function sys(){var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData&&w.colorScheme) return w.colorScheme; return (window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}
+  function apply(){
+    var r=m==='auto'?sys():m; R.setAttribute('data-theme',r); R.style.colorScheme=r;
+    var b=document.querySelector('.themebtn'); if(b){b.textContent=m==='auto'?'◐':(m==='dark'?'☾':'☀'); b.title={auto:'Тема: авто',light:'Тема: светлая',dark:'Тема: тёмная'}[m]; b.setAttribute('aria-label',b.title)}
+    try{var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData){w.setHeaderColor&&w.setHeaderColor(r==='dark'?'#121315':'#FBFBFA'); w.setBackgroundColor&&w.setBackgroundColor(r==='dark'?'#121315':'#FBFBFA')}}catch(e){}
+  }
+  window.__theme={get:function(){return m},apply:apply,cycle:function(){m=m==='auto'?'light':(m==='light'?'dark':'auto'); try{localStorage.setItem('study-theme',m)}catch(e){} apply()}};
+  apply();
+  function mount(){
+    apply();
+    if(document.querySelector('.themebtn')) return;
+    var anchor=document.querySelector('[data-langsw]'); if(!anchor) return;
+    var b=document.createElement('button'); b.type='button'; b.className='themebtn'; b.onclick=function(){window.__theme.cycle()};
+    anchor.parentNode.insertBefore(b,anchor); apply();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+  window.addEventListener('load',apply);
+  try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',apply)}catch(e){}
+  /* если Telegram подтянул более новый study-theme из облака, страница перезагрузится синхронизацией */
+})();
+</script>
+<style id="theme-fix">
+.themebtn{font:600 15px/1 system-ui,sans-serif;width:34px;height:34px;border-radius:50%;border:1px solid var(--line,var(--edge,#E6E6E1));background:var(--card,var(--board,#fff));color:var(--ink,#17181C);cursor:pointer;flex:none;padding:0}
+.themebtn:hover{border-color:#557546}
+/* логотип B */
+.lgB{display:flex;flex-direction:column;line-height:1;gap:5px}
+.lgB .w{font:600 19px/1 Unbounded,sans-serif;letter-spacing:-.01em;color:var(--ink,#17181C);white-space:nowrap}
+.lgB .w i{font-style:normal;color:#557546}
+.lgB .w u{display:inline-block;width:6px;height:6px;border-radius:50%;background:#E2D47E;margin-left:3px;text-decoration:none}
+.lgB .s{display:flex;align-items:center;gap:6px;font:600 9px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted,#5D5F69);white-space:nowrap}
+.lgB .s s{display:block;width:18px;height:1.5px;background:#557546;text-decoration:none}
+:root[data-theme="dark"] .lgB .w i,:root[data-theme="dark"] .lgB .s s{color:#8DB57B;background:#8DB57B}
+:root[data-theme="dark"] .lgB .w i{background:none}
+/* пастельные плашки в тёмной теме: локально светлая палитра, чтобы графики читались */
+:root[data-theme="dark"] .ex,:root[data-theme="dark"] .tint-yel,:root[data-theme="dark"] .tint-blue,:root[data-theme="dark"] .tint-mint,:root[data-theme="dark"] .short + .board{
+ --ink:#17181C;--muted:#3b3d46;--line:rgba(23,24,28,.22);--edge:rgba(23,24,28,.22);--grid:rgba(23,24,28,.2);--iso:rgba(23,24,28,.2);
+ --soft:rgba(255,255,255,.45);--card:#FFFFFF;--bg:#FBFBFA;--paper:rgba(255,255,255,.5);
+ --green:#3F5F33;--blue:#3F5F33;--marker:#8A6A00;--violet:#3F6C96;--ok:#2F5A26;--bad:#A33626;--ok-soft:#E4EDDF;--bad-soft:#F6E3DF;--hi:#FFF3A0;color-scheme:light;color:#17181C}
+:root[data-theme="dark"] .short + .board{--board:#E2D47E}
+:root[data-theme="dark"] .ex .controls label,:root[data-theme="dark"] .ex p,:root[data-theme="dark"] .ex li{color:#17181C}
+</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
+(function(){
+  var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
+  var PFX=/^(imsds-|mmmds-|aacm-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var inTg=!!(tg&&tg.initData);
+  var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
+  var origSet=Storage.prototype.setItem;
+  function gate(){
+    if(inTg||dev) return;
+    var s=document.createElement('style');
+    s.textContent='#gate{position:fixed;inset:0;z-index:99999;background:#FBFBFA;color:#17181C;display:grid;place-items:center;padding:24px;text-align:center;font:16px/1.5 Onest,system-ui,sans-serif}#gate b{display:block;font:600 22px Unbounded,sans-serif;margin-bottom:10px}#gate p{max-width:34ch;margin:0 auto 18px;color:#5D5F69}#gate a{display:inline-block;background:#557546;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600}';
+    document.head.appendChild(s);
+    function mk(){ var d=document.createElement('div'); d.id='gate'; d.innerHTML='<div><b>JulYera study hub</b><p>Обучалки открываются только через Telegram-бота: так прогресс привязан к твоему аккаунту.</p>'+(BOT_URL?'<a href="'+BOT_URL+'">Открыть бота</a>':'')+'</div>'; document.body.appendChild(d); document.body.style.overflow='hidden'; }
+    if(document.body) mk(); else document.addEventListener('DOMContentLoaded',mk);
+  }
+  /* gate() отключён: сайт открывается и без бота, прогресс хранится в браузере, в Telegram синхронизируется */
+  if(!inTg) return;
+  try{ tg.ready(); tg.expand(); }catch(e){}
+  var cs=tg.CloudStorage, timers={};
+  function lsKeys(){ var o=[]; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(PFX.test(k)) o.push(k); } return o; }
+  function push(k){
+    var v=localStorage.getItem(k); if(v==null) return;
+    var ts=+localStorage.getItem('__ts_'+k)||Date.now(), n=Math.max(1,Math.ceil(v.length/CH));
+    for(var i=0;i<n;i++) cs.setItem(k+'_'+i, v.slice(i*CH,(i+1)*CH));
+    cs.setItem(k+'_m', JSON.stringify({n:n,ts:ts}));
+  }
+  Storage.prototype.setItem=function(k,v){
+    origSet.call(this,k,v);
+    if(this===localStorage && PFX.test(k) && k.indexOf('__ts_')!==0){
+      origSet.call(this,'__ts_'+k,String(Date.now()));
+      clearTimeout(timers[k]); timers[k]=setTimeout(function(){push(k)},1500);
+    }
+  };
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) lsKeys().forEach(push); });
+  cs.getKeys(function(err,keys){
+    if(err||!keys) return;
+    var metas=keys.filter(function(x){return /_m$/.test(x)}), left=metas.length, changed=false, seen={};
+    function finish(){
+      lsKeys().forEach(function(k){ if(!seen[k]) push(k); });
+      var done=false; try{ done=sessionStorage.getItem('synced')==='1'; }catch(e){}
+      if(changed && !done){ try{sessionStorage.setItem('synced','1');}catch(e){} location.reload(); }
+    }
+    if(!left) return finish();
+    metas.forEach(function(mk){
+      var k=mk.slice(0,-2); seen[k]=1;
+      cs.getItem(mk,function(e,mv){
+        var m={}; try{m=JSON.parse(mv)}catch(x){}
+        var lts=+localStorage.getItem('__ts_'+k)||0;
+        if(m.ts>lts && m.n){
+          var names=[]; for(var i=0;i<m.n;i++) names.push(k+'_'+i);
+          cs.getItems(names,function(e2,vals){
+            if(!e2&&vals){ var s=''; names.forEach(function(nm){ s+=vals[nm]||''; });
+              if(s && s!==localStorage.getItem(k)){ origSet.call(localStorage,k,s); changed=true; }
+              origSet.call(localStorage,'__ts_'+k,String(m.ts)); }
+            if(--left===0) finish();
+          });
+        } else { if(lts>m.ts) push(k); if(--left===0) finish(); }
+      });
+    });
+  });
+})();
+</script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JulYera · study hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#f6f8fb;--board:#fff;--ink:#1b2a44;--muted:#5d6b84;--blue:#2457d6;--marker:#f08a00;--ok:#1f9d63;--bad:#d23c3c;--line:#e3e9f2;--side:#eef2f8;--soft:#dce5fb}
+:root{--bg:#FBFBFA;--ink:#17181C;--muted:#5D5F69;--line:#E6E6E1;--green:#557546;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Onest,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.bt{display:flex;flex-direction:column;line-height:1}.bt b{font:600 17px/1 Unbounded,sans-serif;letter-spacing:-.01em}
+.bt small{font:600 9.5px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.lang{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12px Onest,sans-serif;padding:7px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+main{max-width:980px;margin:0 auto;padding:40px 20px 60px}
+.tag{font:600 11px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+h1{font:600 clamp(28px,5vw,44px)/1.1 Unbounded,sans-serif;margin:10px 0 8px}h1 em{font-style:normal;color:var(--green)}
+.sub{color:var(--muted);max-width:56ch;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.c{display:flex;flex-direction:column;gap:10px;border-radius:26px;padding:26px;color:#17181C;text-decoration:none;min-height:230px;transition:transform .15s}
+.c:hover{transform:translateY(-3px)}.c .k{font:600 12px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.c h2{font:600 24px/1.2 Unbounded,sans-serif;margin:0}.c p{margin:0;opacity:.85}.c .st{margin-top:auto;font:600 14px Onest;display:flex;justify-content:space-between;align-items:center}
+:root[data-theme="dark"]{--bg:#121315;--ink:#F1F1EE;--muted:#A5A7B0;--line:#2C2E34;--green:#8DB57B;--card:#1B1C20}
+.c{--ink:#17181C}
+.bar{height:6px;border-radius:3px;background:rgba(23,24,28,.15);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:#17181C;width:0}
+.how{margin:28px 0 0;border:1px solid var(--line);border-radius:20px;padding:6px 20px;background:var(--card);max-width:760px}.how summary{cursor:pointer;font:700 15px Onest,system-ui,sans-serif;padding:12px 0;list-style:none}.how summary::-webkit-details-marker{display:none}.how summary:after{content:"＋";float:right;color:var(--muted)}.how[open] summary:after{content:"−"}.how ol{margin:0 0 14px;padding-left:20px;color:var(--muted);line-height:1.6}.how li{margin:8px 0}.how b{color:var(--ink)}
+</style>
+<style>
+:root{--bg:#FBFBFA;--ink:#17181C;--muted:#5D5F69;--line:#E6E6E1;--green:#557546;--card:#fff;--yel:#E2D47E;--mint:#A9C89D;--sky:#C9D8FA;--bad:#A33626;--ok:#2F5A26;--code:#F1F1EC}
+:root[data-theme="dark"]{--bg:#121315;--ink:#F1F1EE;--muted:#A5A7B0;--line:#2C2E34;--green:#8DB57B;--card:#1B1C20;--bad:#E58A7A;--ok:#8DB57B;--code:#24262B}
 *{box-sizing:border-box}html,body{margin:0}
-body{font:18px/1.6 Onest,system-ui,sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh}
-#side{width:290px;background:var(--side);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto;flex:none}
-#side h1{font:700 15px Unbounded,sans-serif;margin:0 0 4px}#side .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
-#side a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;cursor:pointer}
-#side a:hover{background:#fff}#side a.on{background:var(--blue);color:#fff}
-#side a .n{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
-#side a.on .n{background:#fff}#side a.done .n{background:var(--ok);color:#fff}
-#side .links{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:14px}
-main{flex:1;max-width:820px;margin:0 auto;padding:22px 20px 90px;width:100%}
-.top{display:none;align-items:center;gap:10px;margin-bottom:12px}.top button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}
-.tt{font:700 13px Unbounded,sans-serif;color:var(--blue);text-transform:uppercase;letter-spacing:.04em}
-h2.tp{font:700 26px/1.2 Unbounded,sans-serif;margin:6px 0 4px}.goal{color:var(--muted);margin:0 0 14px}
-.dots{display:flex;gap:6px;margin:10px 0 16px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--blue)}.dots i.ok{background:var(--ok)}
-.card{background:var(--board);border:1px solid var(--line);border-radius:20px;padding:24px 26px;box-shadow:0 2px 10px rgba(30,50,90,.05)}
-.card .kind{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px}
-.k-story{background:#e8efff;color:var(--blue)}.k-num{background:#fff2dc;color:#b36500}.k-formula{background:#efe7ff;color:#6a42c2}.k-quiz{background:#e0f5ea;color:var(--ok)}.k-exam{background:#ffe5e5;color:var(--bad)}
+body{font:18px/1.6 Onest,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:6}
+.brand{text-decoration:none;color:inherit}
+.lang{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12px Onest,sans-serif;padding:7px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.menu{display:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:7px 12px;font:600 13px Onest;cursor:pointer}
+.wrap{display:flex;max-width:1180px;margin:0 auto}
+#side{width:300px;flex:none;padding:18px 14px;position:sticky;top:67px;height:calc(100vh - 67px);overflow:auto}
+#side .ttl{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:2px 12px 10px}
+#side a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;cursor:pointer}
+#side a:hover{background:var(--card)}#side a.on{background:var(--ink);color:var(--bg)}
+#side a .n{width:24px;height:24px;border-radius:50%;background:var(--yel);color:#17181C;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+#side a.done .n{background:var(--mint)}
+#side .links{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}#side .links a{font-size:14px;color:var(--muted)}
+main{flex:1;min-width:0;max-width:780px;padding:22px 20px 90px}
+.tag{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+h2.tp{font:700 clamp(24px,4.4vw,34px)/1.15 Unbounded,sans-serif;margin:8px 0 4px}.goal{color:var(--muted);margin:0 0 14px}
+.dots{display:flex;gap:6px;margin:12px 0 16px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--ink)}.dots i.ok{background:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px 28px}
+.kind{display:inline-block;font:600 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;padding:5px 11px;border-radius:20px;margin-bottom:10px;color:#17181C}
+.k-story{background:var(--sky)}.k-num{background:var(--yel)}.k-formula{background:#D9CCF0}.k-quiz{background:var(--mint)}.k-exam{background:#F2C7BE}
 .card h3{font:700 21px/1.3 Unbounded,sans-serif;margin:4px 0 12px}
-.card p{margin:.6em 0}.card ul.big,.card ol.big{padding-left:22px}.card li{margin:.5em 0}
-code,pre.code{font:15px 'JetBrains Mono',monospace;background:#f1f4fa;border-radius:6px;padding:1px 6px}
+.card p{margin:.6em 0}.card li{margin:.5em 0}.card ul.big,.card ol.big{padding-left:22px}
+code,pre.code{font:15px 'JetBrains Mono',monospace;background:var(--code);border-radius:6px;padding:1px 6px}
 pre.code{padding:14px 16px;overflow:auto;line-height:1.5;border:1px solid var(--line)}
-table{border-collapse:collapse;margin:10px 0;width:100%}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;font-size:16px}th{background:var(--side)}
-table.sym td:first-child{white-space:nowrap;font-weight:600;background:#faf7ff}
-.q{font-size:20px;font-weight:600;margin:4px 0 14px}.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:13px 16px;margin:9px 0;font:inherit;cursor:pointer}
-.opt:hover:not(:disabled){border-color:var(--blue)}.opt.good{border-color:var(--ok);background:#e9f8f0}.opt.bad{border-color:var(--bad);background:#fdecec}
-.why{margin-top:12px;padding:12px 16px;border-radius:12px;background:#fff7e3;border:1px solid #f3dca0}
+table{border-collapse:collapse;margin:10px 0;width:100%}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;font-size:16px}th{background:var(--code)}
+table.sym td:first-child{white-space:nowrap;font-weight:600;background:var(--code)}
+.q{font-size:20px;font-weight:600;margin:4px 0 14px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:13px 16px;margin:9px 0;font:inherit;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--green)}.opt.good{border-color:var(--green);background:rgba(85,117,70,.16)}.opt.bad{border-color:var(--bad);background:rgba(163,54,38,.14)}
+.why{margin-top:12px;padding:12px 16px;border-radius:14px;background:rgba(226,212,126,.28);border:1px solid rgba(226,212,126,.8)}
 .nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
-.btn{border:0;border-radius:14px;padding:13px 22px;font:600 16px Onest,sans-serif;cursor:pointer;background:var(--blue);color:#fff}.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn[disabled]{opacity:.4;cursor:default}
-.fin{text-align:center}.fin .big{font:700 40px Unbounded;color:var(--ok)}
-@media(max-width:860px){#side{position:fixed;left:-310px;z-index:5;transition:left .2s;box-shadow:4px 0 20px rgba(0,0,0,.15)}#side.open{left:0}.top{display:flex}.card{padding:18px}body{font-size:17px}}
+.btn{border:0;border-radius:20px;padding:13px 24px;font:600 15px Onest,sans-serif;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}.btn[disabled]{opacity:.35;cursor:default}
+.fin{text-align:center}.fin .big{font:700 44px Unbounded;color:var(--green)}
+@media(max-width:860px){.menu{display:inline-block}#side{position:fixed;left:-320px;top:67px;z-index:5;background:var(--bg);border-right:1px solid var(--line);transition:left .2s;width:290px}#side.open{left:0}.card{padding:18px}body{font-size:17px}.lang{margin-left:0}header .sp{margin-left:auto}}
 </style></head><body>
-<nav id="side"></nav>
-<main><div class="top"><button id="menu">☰ Темы</button><span class="tt">AACM · Лёгкий курс</span></div><div id="view"></div></main>
+<header><a class="brand" href="index.html" aria-label="JulYera study hub"><span class="lgB"><span class="w">Jul<i>Y</i>era<u></u></span><span class="s"><s></s>study hub</span></span></a><span class="sp"></span><button class="menu" id="menu"></button>
+<span class="lang" data-langsw><button data-l="ru" aria-pressed="true">RU</button><button data-l="en" aria-pressed="false">EN</button></span></header>
+<div class="wrap"><nav id="side"></nav><main><div id="view"></div></main></div>
 <script>
 const TOPICS = [
 {id:'py', title:'Python для экзамена', goal:'Уметь читать и писать короткие функции про графы.', cards:[
@@ -177,46 +325,190 @@ for u in graph:               # u по очереди: 'A', 'B', 'C'
 ]}
 ];
 
+const TOPICS_EN = [
+{id:'py', title:'Python for the exam', goal:'Read and write short graph functions with confidence.', cards:[
+ {k:'story', h:'Four "boxes" of Python', b:`<p>Forget syntax. Remember four boxes:</p>
+ <ul class="big"><li><b>list</b> <code>[3, 1, 2]</code>: a row of numbered cells. Order matters, repeats allowed.</li>
+ <li><b>set</b> <code>{1, 2, 3}</code>: a bag without repeats. Answers "is X in here?" very fast.</li>
+ <li><b>dictionary</b> <code>{'A': ['B','C']}</code>: a notebook, name → value.</li>
+ <li><b>tuple</b> <code>(u, v)</code>: a sealed pair. This is how an edge is written.</li></ul>
+ <p>Our graph is always a <b>dictionary of lists</b>: every node stores the list of its neighbours.</p>`},
+ {k:'num', h:'Reading a graph as a dictionary', b:`<pre class="code">graph = {'A': ['B', 'C'],
+         'B': ['A'],
+         'C': ['A']}
+
+for u in graph:               # u in turn: 'A', 'B', 'C'
+    print(u, len(graph[u]))   # A 2 / B 1 / C 1</pre>
+ <p><code>graph['A']</code> is the list <code>['B','C']</code>, so A has two neighbours. Degree of a node = <code>len(graph[u])</code>. Number of edges = sum of degrees / 2 = (2+1+1)/2 = <b>2</b>.</p>`},
+ {k:'quiz', q:'How do you get the degree of node u if the graph is stored in a dictionary graph?', o:['graph[u]','len(graph[u])','len(graph)','graph.degree(u)'], a:1, why:'graph[u] is the list of neighbours. Its length is the degree. len(graph) is the number of nodes.'},
+ {k:'quiz', q:'You must check many times "have I already visited this node?". What do you store?', o:['a list','a set','a tuple','a string'], a:1, why:'In a set the check takes one operation; in a list you scan all elements.'},
+ {k:'exam', h:'How to write a function in the exam', b:`<ol class="big"><li>Read what goes in and what must come out.</li><li>Run the example by hand.</li><li>Say the idea in one sentence.</li><li>Write the code with clear variable names.</li><li>Test on an empty graph and on an isolated node.</li><li>State the complexity in words.</li></ol>`}
+]},
+{id:'cx', title:'Complexity: O, Θ, Ω', goal:'Understand how running time grows and name the complexity.', cards:[
+ {k:'story', h:'How many steps if the input grows 10 times?', b:`<p>Complexity answers one question: <b>if there is more data, how much slower does the program get</b>.</p>
+ <p>You look for a friend in a list of n people. Checking one by one takes n steps in the worst case, so time <b>grows with n</b>: O(n). If you check every pair of people for friendship, you do about n² steps, and a 10× bigger input takes 100× longer.</p>`},
+ {k:'num', h:'The same numbers in a table', b:`<table class="tbl"><tr><th>n</th><th>n</th><th>n log n</th><th>n²</th></tr><tr><td>10</td><td>10</td><td>~33</td><td>100</td></tr><tr><td>1000</td><td>1000</td><td>~10 000</td><td>1 000 000</td></tr></table>
+ <p>For n = 1000 an n² algorithm makes a million steps, n log n only ten thousand. That is why complexity matters.</p>`},
+ {k:'formula', h:'What O, Ω, Θ mean', b:`<table class="sym"><tr><td><b>O(f)</b></td><td>"no worse than f": a ceiling. Time ≤ c·f(n).</td></tr><tr><td><b>Ω(f)</b></td><td>"no better than f": a floor. Time ≥ c·f(n).</td></tr><tr><td><b>Θ(f)</b></td><td>"exactly of order f": both ceiling and floor.</td></tr></table>
+ <p><b>How to simplify:</b> 3n² + 5n + 7 → keep the biggest term n², drop the constant 3 → <b>Θ(n²)</b>.</p>`},
+ {k:'quiz', q:'An algorithm makes 4n + 10 steps. What is its complexity?', o:['O(1)','Θ(n)','Θ(n²)','Θ(4n+10)'], a:1, why:'Drop constants and small terms: the order is n.'},
+ {k:'quiz', q:'Two nested loops over n nodes: for each pair (u, v) check the edge. How many steps?', o:['O(n)','O(n log n)','O(n²)','O(2ⁿ)'], a:2, why:'n × n pairs = n² checks.'},
+ {k:'exam', h:'How to answer about complexity', b:`<p>Do not just say "O(n)". Say <b>why</b>: "the outer loop goes over n nodes, the inner one over all neighbours, 2m in total, so overall O(n + m)".</p><p>Main term first, then the conclusion.</p>`}
+]},
+{id:'alg', title:'Graph algorithms', goal:'BFS, DFS, Dijkstra, converting representations.', cards:[
+ {k:'story', h:'Three ways to walk a graph', b:`<ul class="big"><li><b>BFS (breadth-first)</b>: ripples on water. Neighbours first, then neighbours of neighbours. Needs a <b>queue</b>. Finds shortest paths (by number of edges).</li>
+ <li><b>DFS (depth-first)</b>: a maze with a thread. Go deep to a dead end, then back. Needs a <b>stack</b>.</li>
+ <li><b>Dijkstra</b>: shortest path when edges have <b>costs</b>.</li></ul>`},
+ {k:'num', h:'BFS on a tiny graph', b:`<p>Graph: A–B, A–C, B–D, C–D. Start from A.</p>
+ <table class="tbl"><tr><th>step</th><th>queue</th><th>what we do</th></tr><tr><td>0</td><td>[A]</td><td>take A, add B, C</td></tr><tr><td>1</td><td>[B, C]</td><td>take B, add D</td></tr><tr><td>2</td><td>[C, D]</td><td>take C (D already there)</td></tr><tr><td>3</td><td>[D]</td><td>take D</td></tr></table>
+ <p>Distances from A: A=0, B=1, C=1, D=2. Cost: every node and edge once, <b>O(n + m)</b>.</p>`},
+ {k:'num', h:'Dijkstra with numbers', b:`<p>A→B costs 4, A→C costs 1, C→B costs 2. The direct road to B costs 4, but via C only 1 + 2 = <b>3</b>.</p>
+ <p>Algorithm: take the closest node not finished yet and "relax" its neighbours: if going through it is cheaper, update their distance. Works only with non-negative costs.</p>`},
+ {k:'num', h:'Adjacency list → edge list', b:`<pre class="code">def convert(graph):
+    edges = []
+    for u in graph:
+        for v in graph[u]:
+            edges.append((u, v))
+    return sorted(edges)</pre>
+ <p>Take every neighbour of every node and write the pair. Time: one pass O(n + m) plus sorting O(m log m). In an undirected graph each edge appears twice, (u,v) and (v,u): to take it once, add only when u &lt; v.</p>`},
+ {k:'quiz', q:'You need the path with the fewest edges in an unweighted graph. What do you use?', o:['DFS','BFS','Dijkstra with negative weights','sorting'], a:1, why:'BFS goes layer by layer, so the first time a node is reached it is by a shortest path.'},
+ {k:'quiz', q:'Which structure does BFS need and which does DFS need?', o:['BFS stack, DFS queue','BFS queue, DFS stack','both a queue','both a stack'], a:1, why:'Queue: first in, first out (layers). Stack: last in, first out (deep).'},
+ {k:'exam', h:'A BFS answer on the page', b:`<ol class="big"><li>What it does: explores the graph by layers from s, finds distances.</li><li>How: queue + set of visited nodes.</li><li>Properties: shortest paths in unweighted graphs, finds components.</li><li>Cost: O(n + m) with an adjacency list, O(n²) with a matrix.</li><li>An example on 4 nodes (as above).</li></ol>`}
+]},
+{id:'net', title:'Network basics', goal:'Degree, paths, connectedness, clustering.', cards:[
+ {k:'story', h:'A network = nodes and links', b:`<p>Nodes are people, links are friendships. To describe a network we need six notions: <b>degree</b> (how many friends), <b>distance</b> (chain of acquaintances), <b>diameter</b> (the longest shortest chain), <b>component</b> (a piece where everyone is reachable), <b>giant component</b> (the biggest piece), <b>clustering</b> (do my friends know each other).</p>`},
+ {k:'num', h:'One graph, compute everything', b:`<p>Nodes A,B,C,D,E. Links: A–B, A–C, B–C, C–D, D–E.</p>
+ <pre class="code">A — B
+ \\ /
+  C — D — E</pre>
+ <table class="tbl"><tr><th>node</th><th>k</th></tr><tr><td>A</td><td>2</td></tr><tr><td>B</td><td>2</td></tr><tr><td>C</td><td>3</td></tr><tr><td>D</td><td>2</td></tr><tr><td>E</td><td>1</td></tr></table>
+ <p>Sum of degrees = 10 = 2 × 5 links. Average degree ⟨k⟩ = 10/5 = <b>2</b>. Distance A→E = 3 (A–C–D–E), diameter = 3.</p>`},
+ {k:'formula', h:'Clustering step by step', b:`<p><b>C<sub>i</sub> = L<sub>i</sub> / [k<sub>i</sub>(k<sub>i</sub>−1)/2]</b></p><table class="sym"><tr><td>L<sub>i</sub></td><td>how many links really exist among the neighbours of i</td></tr><tr><td>k<sub>i</sub>(k<sub>i</sub>−1)/2</td><td>how many could exist (all pairs of neighbours)</td></tr></table>
+ <p>Node C: neighbours A, B, D. 3 pairs (A-B, A-D, B-D). Only A–B exists. C<sub>C</sub> = 1/3. Node A: neighbours B, C and they are linked → C<sub>A</sub> = 1/1 = 1. Node E: one neighbour, no pairs → 0.</p>`},
+ {k:'quiz', q:'Four nodes have degrees 3, 2, 2, 1. How many links does the graph have?', o:['8','4','2','3'], a:1, why:'Sum of degrees 3+2+2+1 = 8, links are half of it: 4.'},
+ {k:'quiz', q:'A node has 4 neighbours and only 2 links among them. What is its clustering?', o:['2/4','2/6','2/12','1/2'], a:1, why:'Possible pairs 4·3/2 = 6, 2 exist, so C = 2/6 = 1/3.'},
+ {k:'exam', h:'What to write', b:`<p>Define each term in one phrase, give the formula (k, ⟨k⟩ = 2L/N, C<sub>i</sub>), add a mini example. Say: real networks have high clustering and short distances ("small world").</p>`}
+]},
+{id:'er', title:'Random networks (ER)', goal:'The G(N,p) model, degrees, giant component.', cards:[
+ {k:'story', h:'A coin for every pair', b:`<p>Take N people. For every pair flip a biased coin: with probability p they are friends. That is all. This is the Erdős–Rényi model <b>G(N, p)</b>.</p><p>All pairs are equal, so most people have about the same number of friends and almost nobody has 50. <b>No hubs.</b></p>`},
+ {k:'num', h:'Counting with 10 people', b:`<p>N = 10, p = 0.3. Pairs = 10·9/2 = 45. Expected links ⟨L⟩ = 45 × 0.3 = <b>13.5</b>. Everyone has 9 possible friends, so ⟨k⟩ = 9 × 0.3 = <b>2.7</b>.</p>`},
+ {k:'formula', h:'Formulas letter by letter', b:`<table class="sym"><tr><td>⟨L⟩ = p·N(N−1)/2</td><td>p × number of pairs</td></tr><tr><td>⟨k⟩ = p(N−1)</td><td>p × number of possible friends</td></tr><tr><td>P(k) is Poisson</td><td>a bell around ⟨k⟩, spread √⟨k⟩</td></tr></table>`},
+ {k:'story', h:'Giant component: transition at ⟨k⟩ = 1', b:`<p>While a person has fewer than one friend on average, the network is a scatter of small clumps. When the average passes one, the clumps merge into <b>one giant component</b>. It is a sharp transition, like water freezing.</p><p>Example: N = 1000; at ⟨k⟩ = 0.5 the biggest piece is tens of nodes, at ⟨k⟩ = 2 it already holds ~80% of all nodes.</p>`},
+ {k:'quiz', q:'N = 101, p = 0.05. What is the average degree ⟨k⟩?', o:['0.05','5','101','2.5'], a:1, why:'⟨k⟩ = p(N−1) = 0.05 × 100 = 5.'},
+ {k:'quiz', q:'At ⟨k⟩ = 0.5 a random network has a giant component…', o:['yes','no','always 50%','depends on p only'], a:1, why:'The threshold is ⟨k⟩ = 1. Below it the network is small pieces.'},
+ {k:'exam', h:'Answer "Describe the random network model"', b:`<ol class="big"><li>Definition of G(N,p).</li><li>⟨L⟩ and ⟨k⟩ with numbers.</li><li>P(k): binomial → Poisson.</li><li>Giant component at ⟨k⟩ = 1.</li><li>Weakness: no hubs, low clustering C ≈ p.</li></ol>`}
+]},
+{id:'sw', title:'Small world and Watts–Strogatz', goal:'Why distances are short while clustering is high.', cards:[
+ {k:'story', h:'Six handshakes', b:`<p>In real social networks any two people are linked through a few acquaintances, yet <b>friends of friends are often friends with each other</b>. A random network gives the first but not the second. Watts and Strogatz found a way to get both.</p>`},
+ {k:'num', h:'Numbers for a random network', b:`<p>N = 1000, ⟨k⟩ = 10. Distance ⟨d⟩ ≈ ln N / ln⟨k⟩ = ln 1000 / ln 10 = <b>3</b>. For N = 1 000 000 only <b>6</b>. That is what "logarithm" means.</p><p>But clustering of a random network is C = ⟨k⟩/N = 10/1000 = <b>0.01</b>, while real social networks have C around 0.1–0.5.</p>`},
+ {k:'story', h:'The Watts–Strogatz recipe', b:`<ol class="big"><li>Put the nodes on a <b>ring</b> and link each to its nearest neighbours. You get high clustering (friends sit close) but long paths.</li><li>With probability p <b>rewire</b> each edge to a random place.</li></ol><p>Even small p (about 1%) creates a few "shortcuts" across the ring: distance drops sharply and clustering barely suffers.</p>`},
+ {k:'num', h:'The ring in numbers', b:`<p>N = 1000, 10 neighbours each. d(0) ≈ N/(2·10) = 50, C(0) ≈ 0.67. After p = 0.01: d drops several times, C ≈ 0.65. This is the plot of C(p)/C(0) and d(p)/d(0) you draw in the exam: d falls fast, C holds.</p>`},
+ {k:'quiz', q:'What happens to the ring when p is small (about 0.01)?', o:['Distance grows, C drops','Distance drops sharply, C barely changes','C grows sharply','Nothing'], a:1, why:'A few shortcuts shrink the network, but nearly all neighbourhoods stay, so clustering is kept.'},
+ {k:'quiz', q:'Why does a random network not describe social networks?', o:['It has no paths','Its clustering is too high','Its clustering is too low','It has no nodes'], a:2, why:'In ER, C ≈ ⟨k⟩/N is tiny while real networks have high C.'},
+ {k:'exam', h:'Answer "Describe the Watts–Strogatz model"', b:`<ol class="big"><li>Why: ER does not give high C, a lattice does not give short paths.</li><li>Construction: ring → rewire edges with probability p.</li><li>Result: a range of p where d is small and C is large.</li><li>Plot C(p)/C(0), d(p)/d(0).</li><li>Weakness: P(k) is close to Poisson, no hubs.</li></ol>`}
+]},
+{id:'sf', title:'Scale-free networks', goal:'Power law, hubs, the meaning of γ.', cards:[
+ {k:'story', h:'Almost all small, but there are giants', b:`<p>Human height: almost everyone is 160–190 cm, no giants. Wealth or links to a website: almost all small, but there are monstrous giants. The first is a bell, the second a <b>power law</b>: P(k) ∼ k<sup>−γ</sup>. Networks with such a law are called scale-free, and the giants are <b>hubs</b>.</p>`},
+ {k:'num', h:'Size of the biggest hub', b:`<p>N = 10⁶, γ = 2.5, minimum degree 1. k<sub>max</sub> ≈ N<sup>1/(γ−1)</sup> = 10<sup>6/1.5</sup> = <b>10 000</b>. In a random network with the same ⟨k⟩ the biggest node would be about 15. That is what hubs are.</p>`},
+ {k:'formula', h:'What γ means', b:`<table class="sym"><tr><td>γ &gt; 3</td><td>almost an ordinary network, d ∼ ln N</td></tr><tr><td>2 &lt; γ &lt; 3</td><td>ultra-small world d ∼ ln ln N, ⟨k²⟩ diverges</td></tr><tr><td>γ ≤ 2</td><td>almost everything sits in a few hubs</td></tr></table><p>The smaller γ, the fatter the tail and the more hubs. For N = 10⁶: ln N ≈ 13.8, ln ln N ≈ 2.6.</p>`},
+ {k:'quiz', q:'What does a power law look like on log–log axes?', o:['A bell','A straight line with slope −γ','A horizontal line','A parabola'], a:1, why:'If P ∼ k^−γ then log P = −γ·log k + const, a straight line.'},
+ {k:'quiz', q:'Which network has hubs?', o:['Random ER','Lattice','Scale-free','Ring'], a:2, why:'ER and lattice have nearly equal degrees; hubs appear with a power-law tail.'},
+ {k:'exam', h:'Answer "Discuss the scale-free property"', b:`<ol class="big"><li>Definition P(k) ∼ k<sup>−γ</sup> and log–log plot.</li><li>Hubs and comparison with Poisson.</li><li>Value of γ and regimes (γ &gt; 3, 2 &lt; γ &lt; 3).</li><li>Examples: Internet, WWW, social networks, protein networks.</li><li>Consequences: robustness and epidemics (topics 11, 13).</li></ol>`}
+]},
+{id:'ba', title:'Barabási–Albert model', goal:'Growth + preferential attachment.', cards:[
+ {k:'story', h:'The rich get richer', b:`<p>A network does not appear at once. It <b>grows</b>: a new node arrives and links to m old ones. But not to random ones: <b>more often to those that already have many links</b>. A popular page is cited more, a famous person gets more friend requests. This is <b>preferential attachment</b>.</p>`},
+ {k:'num', h:'Probability with numbers', b:`<p>The network has 4 nodes with degrees 3, 1, 1, 1. Sum of degrees = 6. The new node picks the first with probability 3/6 = <b>0.5</b>, each other node with probability 1/6.</p>`},
+ {k:'formula', h:'The formula Π(k)', b:`<p><b>Π(k<sub>i</sub>) = k<sub>i</sub> / Σ<sub>j</sub> k<sub>j</sub></b></p><table class="sym"><tr><td>k<sub>i</sub></td><td>degree of node i</td></tr><tr><td>Σ k<sub>j</sub></td><td>sum of all degrees (= 2L)</td></tr><tr><td>Π</td><td>probability that the new node picks i</td></tr></table><p>Result of the model: P(k) ∼ k<sup>−3</sup> for any m, i.e. γ = 3.</p>`},
+ {k:'story', h:'What if growth or preference is removed', b:`<ul class="big"><li><b>Model A</b>: growth, no preference (random target) → exponential tail, no hubs.</li><li><b>Model B</b>: no growth, preference → the network slowly becomes almost complete.</li></ul><p>Conclusion: <b>both</b> ingredients are needed. This is what the exam asks.</p>`},
+ {k:'quiz', q:'Degrees 2, 2, 1, 1. Probability that the new node picks the first?', o:['1/2','1/3','1/6','2/3'], a:1, why:'Sum of degrees 2+2+1+1 = 6, the first has degree 2, probability 2/6 = 1/3.'},
+ {k:'quiz', q:'Is growth needed to get a scale-free network?', o:['No, preference is enough','Yes, both growth and preference are needed','Only growth is needed','Neither is needed'], a:1, why:'Without growth (Model B) the law is not stationary, without preference (Model A) the tail is exponential.'},
+ {k:'exam', h:'Answer "Describe the BA model"', b:`<ol class="big"><li>Initial core and growth: each new node brings m links.</li><li>Preferential attachment Π(k) = k/Σk.</li><li>Result γ = 3, hubs, first-mover advantage.</li><li>Models A and B: why both ingredients are needed.</li><li>Limits: γ is always 3, no high clustering.</li></ol>`}
+]},
+{id:'fit', title:'Evolution: fitness (Bianconi–Barabási)', goal:'Why newcomers sometimes overtake old nodes.', cards:[
+ {k:'story', h:'The newcomer beats the veteran', b:`<p>In BA those who came earlier win. In life Google came after Yahoo and still won: it was "better". So besides age we need <b>attractiveness</b> η (fitness).</p>`},
+ {k:'num', h:'Compare two nodes', b:`<p>Old node: k = 10, η = 0.2 → weight <b>2.0</b>. Newcomer: k = 3, η = 1 → weight <b>3.0</b>. The newcomer is more attractive although it has fewer links.</p>`},
+ {k:'formula', h:'The formula', b:`<p><b>Π<sub>i</sub> = η<sub>i</sub>·k<sub>i</sub> / Σ<sub>j</sub> η<sub>j</sub>·k<sub>j</sub></b></p><p>This is BA, but each degree is multiplied by attractiveness. If all η are equal we get plain BA. If one node has a huge η it takes a share of all new links ("Bose–Einstein condensation").</p>`},
+ {k:'quiz', q:'If all η are equal, the Bianconi–Barabási model turns into…', o:['ER','Watts–Strogatz','the Barabási–Albert model','a lattice'], a:2, why:'Equal η cancel in numerator and denominator.'},
+ {k:'exam', h:'Answer "Describe the Bianconi–Barabási model"', b:`<ol class="big"><li>Problem of BA: only age decides.</li><li>New: fitness η, Π ∝ η·k.</li><li>Result: late nodes with large η catch up.</li><li>Dynamics k(t) ∼ t<sup>β(η)</sup>, degree distribution is a weighted sum of power laws.</li><li>Example: Google vs Yahoo.</li></ol>`}
+]},
+{id:'dc', title:'Degree correlation', goal:'Do hubs befriend hubs.', cards:[
+ {k:'story', h:'Whom the popular befriend', b:`<p>In social networks popular people befriend popular people (<b>assortative</b> network). On the Internet and in proteins hubs link to small nodes (<b>disassortative</b>). The question: does my neighbour's degree depend on my degree?</p>`},
+ {k:'num', h:'The star', b:`<p>Centre 0 is linked to 1, 2, 3, 4. Degree of the centre 4, of leaves 1. For a leaf the neighbour is the centre with degree 4, so k<sub>nn</sub>(1) = <b>4</b>. For the centre the neighbours are leaves, so k<sub>nn</sub>(4) = <b>1</b>. The value falls as k grows: the network is <b>disassortative</b>.</p>`},
+ {k:'formula', h:'k_nn step by step', b:`<p><b>k<sub>nn</sub>(i) = (1/k<sub>i</sub>) · Σ<sub>j neighbour of i</sub> k<sub>j</sub></b>: add up the degrees of all neighbours and divide by their number, i.e. take the average.</p><p><b>k<sub>nn</sub>(k)</b> is the same average over all nodes of degree k. Grows with k → assortative (r &gt; 0). Falls → disassortative (r &lt; 0).</p>`},
+ {k:'quiz', q:'k_nn(k) grows with k. What network is it?', o:['Disassortative','Assortative','Random ER','Empty'], a:1, why:'Nodes with large k have neighbours with large k: hubs befriend hubs.'},
+ {k:'exam', h:'What to write', b:`<p>Definition, formula k<sub>nn</sub>(i), k<sub>nn</sub>(k) and how to read the plot, Pearson coefficient r, 2 examples (social networks assortative, Internet disassortative).</p>`}
+]},
+{id:'rob', title:'Network robustness', goal:'Failures vs attacks, breakdown threshold.', cards:[
+ {k:'story', h:'Break a random node or the most important one?', b:`<p><b>Failure</b>: a random node breaks. <b>Attack</b>: the most connected nodes (hubs) are removed on purpose. We watch how fast the giant component falls apart.</p>`},
+ {k:'num', h:'The star', b:`<p>Degrees 1, 1, 1, 1, 4. ⟨k⟩ = 1.6, ⟨k²⟩ = 4, κ = ⟨k²⟩/⟨k⟩ = 2.5 &gt; 2, so a giant component exists. Remove the centre (attack): 4 isolated nodes remain. Remove a leaf (failure): a star of 4 nodes remains. The hub decides everything.</p>`},
+ {k:'formula', h:'Breakdown threshold', b:`<p><b>f<sub>c</sub> = 1 − 1/(κ − 1)</b>, where κ = ⟨k²⟩/⟨k⟩ (Molloy–Reed criterion: a giant component exists while κ &gt; 2).</p><p>ER: κ = ⟨k⟩ + 1, so f<sub>c</sub> = 1 − 1/⟨k⟩. Example ⟨k⟩ = 4 → f<sub>c</sub> = <b>0.75</b>. Scale-free with γ &lt; 3: ⟨k²⟩ is huge, f<sub>c</sub> → <b>1</b>: random failures can hardly break it.</p>`},
+ {k:'quiz', q:'An ER network with ⟨k⟩ = 4. What fraction of nodes must be removed at random to destroy the giant component?', o:['25%','50%','75%','100%'], a:2, why:'f_c = 1 − 1/⟨k⟩ = 1 − 1/4 = 0.75.'},
+ {k:'quiz', q:'Why is a scale-free network "robust to failures but vulnerable to attacks"?', o:['It has no hubs','A random node is almost always small, but removing hubs tears the network','It is very small','It has many components'], a:1, why:'A random pick hits a small node, while hubs hold the whole connectivity.'},
+ {k:'exam', h:'Answer "Robustness and attacks"', b:`<ol class="big"><li>Definitions of failure and attack; giant component as the measure.</li><li>Molloy–Reed criterion and f<sub>c</sub>.</li><li>ER: gradual breakdown; scale-free: robust/fragile.</li><li>Kinds of attack: by degree, by betweenness, with recalculation.</li><li>Example: Internet, power grid.</li></ol>`}
+]},
+{id:'com', title:'Communities', goal:'Girvan–Newman and modularity.', cards:[
+ {k:'story', h:'Groups inside a network', b:`<p>A <b>community</b> is a group of nodes with more links inside than outside. How to find it? <b>Girvan–Newman</b>: find the edge that carries the most shortest paths (a "bridge"), delete it, repeat. The network falls into groups.</p>`},
+ {k:'num', h:'Two triangles and a bridge', b:`<p>Nodes 1,2,3 form a triangle, 4,5,6 another, plus the edge 3–4. Links L = 7. All paths between "left" and "right" nodes pass through edge 3–4, there are 3×3 = 9 such pairs, the maximum. Delete the bridge and you get two triangles.</p>`},
+ {k:'formula', h:'Modularity Q', b:`<p><b>Q = Σ<sub>c</sub> [ L<sub>c</sub>/L − (k<sub>c</sub>/2L)² ]</b></p><table class="sym"><tr><td>L<sub>c</sub>/L</td><td>what share of all links lies inside group c</td></tr><tr><td>(k<sub>c</sub>/2L)²</td><td>what share would lie inside by chance</td></tr></table><p>Compute: group {1,2,3}: L<sub>c</sub> = 3, k<sub>c</sub> = 2+2+3 = 7. 3/7 − (7/14)² = 0.429 − 0.25 = 0.179. Two groups give <b>Q ≈ 0.357</b>. All nodes in one group give Q = 0.</p>`},
+ {k:'quiz', q:'What is the modularity if all nodes are in one group?', o:['1','0','−1','0.5'], a:1, why:'L_c/L = 1 and (k_c/2L)² = 1, so Q = 0.'},
+ {k:'quiz', q:'Which edge does Girvan–Newman remove at each step?', o:['the lowest weight','the highest edge betweenness','a random one','one joining hubs'], a:1, why:'Bridges between groups carry the most shortest paths.'},
+ {k:'exam', h:'Answer "How are communities detected?"', b:`<ol class="big"><li>Definition of a community.</li><li>GN: edge betweenness → delete → recompute → dendrogram.</li><li>Pick the partition with maximum Q, formula of Q.</li><li>Greedy Newman: merges with the largest gain of Q.</li><li>GN complexity ≈ O(L²N), so it is slow.</li></ol>`}
+]},
+{id:'sp', title:'Epidemics: SI, SIS, SIR', goal:'Spreading models and the threshold.', cards:[
+ {k:'story', h:'Three models', b:`<ul class="big"><li><b>SI</b>: healthy → sick, no recovery, in the end everyone is sick.</li><li><b>SIS</b>: healthy → sick → healthy again (a cold). There is a threshold: below it the disease dies out.</li><li><b>SIR</b>: healthy → sick → recovered with immunity. The outbreak dies out by itself.</li></ul><p>β is the probability of infecting along one link, μ the probability of recovering.</p>`},
+ {k:'num', h:'SI on a chain', b:`<p>Chain 1–2–3–4–5, node 1 infected, β = 1. Step 1: {1,2}. Step 2: {1,2,3}. Step 3: {1,2,3,4}. After t steps everyone at distance ≤ t is infected: it is BFS by layers.</p>`},
+ {k:'num', h:'SIS threshold with numbers', b:`<p>β = 0.2, μ = 0.1, so λ = β/μ = 2. Random network ⟨k⟩ = 4, threshold λ<sub>c</sub> = 1/⟨k⟩ = <b>0.25</b>. Since 2 &gt; 0.25, the disease spreads. At λ = 0.1 &lt; 0.25 it would die out.</p><p>For a network with hubs the threshold is λ<sub>c</sub> = ⟨k⟩/⟨k²⟩. For γ ≤ 3 the moment ⟨k²⟩ is huge, the threshold ≈ 0: the disease lives at any infectiousness.</p>`},
+ {k:'quiz', q:'In which model does everyone get infected in the end (in a connected network)?', o:['SI','SIS','SIR','none'], a:0, why:'In SI there is no recovery, so the disease reaches everyone.'},
+ {k:'quiz', q:'Why is the epidemic threshold almost zero in a scale-free network?', o:['It has no hubs','⟨k²⟩ is huge because of hubs','It has few nodes','It has no links'], a:1, why:'λ_c = ⟨k⟩/⟨k²⟩ and for γ ≤ 3 the denominator diverges.'},
+ {k:'exam', h:'Answer "Describe the epidemic models"', b:`<ol class="big"><li>Compartments S, I, R and parameters β, μ.</li><li>Three models and their cycles.</li><li>Threshold: λ<sub>c</sub> = 1/⟨k⟩ (homogeneous), ⟨k⟩/⟨k²⟩ (heterogeneous).</li><li>Conclusion about hubs and vaccinating hubs.</li></ol>`}
+]}
+];
+
+const UI={ru:{topics:'Темы',of:'Тема %1 из %2',kinds:{story:'Простыми словами',num:'Сначала числа',formula:'Формула по буквам',quiz:'Проверь себя',exam:'Как отвечать на экзамене'},sub:'13 тем по программе курса. Один экран = одна мысль.',ttl:'AACM · лёгкий курс',full:'← Подробный курс и тренажёр кода',hub:'← Study hub',prev:'← Назад',next:'Дальше →',finish:'Закончить тему',right:'Верно. ',wrong:'Не совсем. ',passed:'Тема «%1» пройдена',score:'Вопросы: %1 из %2 с первой попытки.',again:'Пройти заново',goto:'Дальше: %1 →'},
+en:{topics:'Topics',of:'Topic %1 of %2',kinds:{story:'In plain words',num:'Numbers first',formula:'Formula symbol by symbol',quiz:'Check yourself',exam:'How to answer in the exam'},sub:'13 syllabus topics. One screen = one idea.',ttl:'AACM · easy course',full:'← Full course and code trainer',hub:'← Study hub',prev:'← Back',next:'Next →',finish:'Finish topic',right:'Correct. ',wrong:'Not quite. ',passed:'Topic "%1" completed',score:'Questions: %1 of %2 right on the first try.',again:'Start over',goto:'Next: %1 →'}};
+const f=(s,...a)=>s.replace(/%(\d)/g,(m,i)=>a[i-1]);
+let lang='ru';try{lang=localStorage.getItem('study-lang')==='en'?'en':'ru'}catch(e){}
 const KEY='aacm-easy-v1';
 let S={pos:{},quiz:{},done:{}};try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const KIND={story:'Простыми словами',num:'Сначала числа',formula:'Формула по буквам',quiz:'Проверь себя',exam:'Как отвечать на экзамене'};
+const T=()=>lang==='en'?TOPICS_EN:TOPICS, U=()=>UI[lang];
 let cur=TOPICS[0].id;
 const side=document.getElementById('side'),view=document.getElementById('view');
 function qkey(t,i){return t.id+':'+i}
 function renderSide(){
-  side.innerHTML=`<h1>AACM · Лёгкий курс</h1><div class="sub">13 тем по программе курса. Один экран = одна мысль.</div>`+
-  TOPICS.map((t,i)=>`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':i+1}</span>${t.title}</a>`).join('')+
-  `<div class="links"><a href="aacm.html">← Подробный курс и тренажёр кода</a><a href="index.html">← Study hub</a></div>`;
+  side.innerHTML=`<div class="ttl">${U().ttl}</div>`+T().map((t,i)=>`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':i+1}</span>${t.title}</a>`).join('')+
+  `<div class="links"><a href="aacm.html">${U().full}</a><a href="index.html">${U().hub}</a></div>`;
   side.querySelectorAll('a[data-id]').forEach(a=>a.onclick=()=>{go(a.dataset.id);side.classList.remove('open')});
+  document.getElementById('menu').textContent='☰ '+U().topics;
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
+  document.documentElement.lang=lang;
 }
-function go(id){cur=id;S.last=id;save();render();window.scrollTo(0,0);renderSide()}
+function go(id,keepScroll){cur=id;S.last=id;save();try{history.replaceState(null,'','#'+id)}catch(e){}render();renderSide();if(!keepScroll)window.scrollTo(0,0)}
 function render(){
-  const t=TOPICS.find(x=>x.id===cur),i=S.pos[t.id]||0,c=t.cards[Math.min(i,t.cards.length-1)];
+  const Ts=T(),t=Ts.find(x=>x.id===cur),i=S.pos[t.id]||0,c=t.cards[Math.min(i,t.cards.length-1)],u=U();
   const dots=t.cards.map((_,j)=>`<i class="${j<i?'ok':j===i?'on':''}"></i>`).join('');
-  const last=i>=t.cards.length;
-  let body='';
+  const last=i>=t.cards.length;let body='';
   if(last){
-    const nxt=TOPICS[TOPICS.indexOf(t)+1];
-    const quizzes=t.cards.map((c,j)=>[c,j]).filter(x=>x[0].k==='quiz');
-    const right=quizzes.filter(([c,j])=>S.quiz[qkey(t,j)]===c.a).length;
-    body=`<div class="card fin"><div class="big">✓</div><h3>Тема «${t.title}» пройдена</h3><p>Вопросы: ${right} из ${quizzes.length} с первой попытки.</p><div class="nav" style="justify-content:center"><button class="btn ghost" id="again">Пройти заново</button>${nxt?`<button class="btn" id="nxt">Дальше: ${nxt.title} →</button>`:''}</div></div>`;
+    const nxt=Ts[Ts.indexOf(t)+1];
+    const qs=t.cards.map((c,j)=>[c,j]).filter(x=>x[0].k==='quiz');
+    const right=qs.filter(([c,j])=>S.quiz[qkey(t,j)]===c.a).length;
+    body=`<div class="card fin"><div class="big">✓</div><h3>${f(u.passed,t.title)}</h3><p>${f(u.score,right,qs.length)}</p><div class="nav" style="justify-content:center"><button class="btn ghost" id="again">${u.again}</button>${nxt?`<button class="btn" id="nxt">${f(u.goto,nxt.title)}</button>`:''}</div></div>`;
   } else if(c.k==='quiz'){
     const a=S.quiz[qkey(t,i)];
-    body=`<div class="card"><span class="kind k-quiz">${KIND.quiz}</span><div class="q">${c.q}</div>${c.o.map((o,j)=>`<button class="opt ${a!==undefined?(j===c.a?'good':j===a?'bad':''):''}" data-j="${j}" ${a!==undefined?'disabled':''}>${o}</button>`).join('')}${a!==undefined?`<div class="why"><b>${a===c.a?'Верно. ':'Не совсем. '}</b>${c.why}</div>`:''}</div>`;
-  } else {
-    body=`<div class="card"><span class="kind k-${c.k}">${KIND[c.k]}</span><h3>${c.h}</h3>${c.b}</div>`;
-  }
-  const canNext=!(c&&c.k==='quiz'&&S.quiz[qkey(t,i)]===undefined)||last;
-  view.innerHTML=`<div class="tt">Тема ${TOPICS.indexOf(t)+1} из ${TOPICS.length}</div><h2 class="tp">${t.title}</h2><p class="goal">${t.goal}</p><div class="dots">${dots}</div>${body}
-  ${last?'':`<div class="nav"><button class="btn ghost" id="prev" ${i===0?'disabled':''}>← Назад</button><button class="btn" id="next" ${canNext?'':'disabled'}>${i===t.cards.length-1?'Закончить тему':'Дальше →'}</button></div>`}`;
+    body=`<div class="card"><span class="kind k-quiz">${u.kinds.quiz}</span><div class="q">${c.q}</div>${c.o.map((o,j)=>`<button class="opt ${a!==undefined?(j===c.a?'good':j===a?'bad':''):''}" data-j="${j}" ${a!==undefined?'disabled':''}>${o}</button>`).join('')}${a!==undefined?`<div class="why"><b>${a===c.a?u.right:u.wrong}</b>${c.why}</div>`:''}</div>`;
+  } else body=`<div class="card"><span class="kind k-${c.k}">${u.kinds[c.k]}</span><h3>${c.h}</h3>${c.b}</div>`;
+  const canNext=last||!(c.k==='quiz'&&S.quiz[qkey(t,i)]===undefined);
+  view.innerHTML=`<div class="tag">${f(u.of,Ts.indexOf(t)+1,Ts.length)}</div><h2 class="tp">${t.title}</h2><p class="goal">${t.goal}</p><div class="dots">${dots}</div>${body}${last?'':`<div class="nav"><button class="btn ghost" id="prev" ${i===0?'disabled':''}>${u.prev}</button><button class="btn" id="next" ${canNext?'':'disabled'}>${i===t.cards.length-1?u.finish:u.next}</button></div>`}`;
   view.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{S.quiz[qkey(t,i)]=+b.dataset.j;save();render()});
   const nx=document.getElementById('next');if(nx)nx.onclick=()=>{S.pos[t.id]=i+1;if(i+1>=t.cards.length)S.done[t.id]=true;save();render();renderSide();window.scrollTo(0,0)};
   const pv=document.getElementById('prev');if(pv)pv.onclick=()=>{S.pos[t.id]=Math.max(0,i-1);save();render()};
   const ag=document.getElementById('again');if(ag)ag.onclick=()=>{S.pos[t.id]=0;t.cards.forEach((c,j)=>delete S.quiz[qkey(t,j)]);save();render()};
-  const nt=document.getElementById('nxt');if(nt)nt.onclick=()=>go(TOPICS[TOPICS.indexOf(t)+1].id);
+  const nt=document.getElementById('nxt');if(nt)nt.onclick=()=>go(Ts[Ts.indexOf(t)+1].id);
 }
 document.getElementById('menu').onclick=()=>side.classList.toggle('open');
-if(S.last&&TOPICS.some(t=>t.id===S.last))cur=S.last;
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;try{localStorage.setItem('study-lang',lang)}catch(e){}renderSide();render()});
+const h=(location.hash||'').slice(1);
+if(TOPICS.some(t=>t.id===h))cur=h;else if(S.last&&TOPICS.some(t=>t.id===S.last))cur=S.last;
+window.addEventListener('hashchange',()=>{const x=location.hash.slice(1);if(TOPICS.some(t=>t.id===x)&&x!==cur)go(x)});
 renderSide();render();
 </script></body></html>
