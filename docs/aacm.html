@@ -2045,6 +2045,7 @@ function renderSide(active) {
   const done = ORDER.filter(id => ST.done[id]).length;
   let h = `<div class="brand"><b>AACM Exam Studio</b><span>Advanced Algorithms · экзамен 26.11</span></div>
   <div class="prog" title="Изучено ${done} из ${ORDER.length}"><i style="width:${done / ORDER.length * 100}%"></i></div>
+  <a class="big" href="aacm-easy.html"><span class="ic">☺</span><span class="t">Лёгкий курс (простыми словами)</span></a>
   <a class="big" href="#home" data-route="home"><span class="ic">⌂</span><span class="t">Главная</span></a>
   <a class="big" href="#orig" data-route="orig"><span class="ic">¶</span><span class="t">Оригиналы текстов</span></a>`;
   WEEKS.forEach(w => {

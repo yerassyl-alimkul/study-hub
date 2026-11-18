@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AACM · Лёгкий курс · JulYera study hub</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--paper:#f6f8fb;--board:#fff;--ink:#1b2a44;--muted:#5d6b84;--blue:#2457d6;--marker:#f08a00;--ok:#1f9d63;--bad:#d23c3c;--line:#e3e9f2;--side:#eef2f8;--soft:#dce5fb}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:18px/1.6 Onest,system-ui,sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh}
+#side{width:290px;background:var(--side);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto;flex:none}
+#side h1{font:700 15px Unbounded,sans-serif;margin:0 0 4px}#side .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+#side a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;cursor:pointer}
+#side a:hover{background:#fff}#side a.on{background:var(--blue);color:#fff}
+#side a .n{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+#side a.on .n{background:#fff}#side a.done .n{background:var(--ok);color:#fff}
+#side .links{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:14px}
+main{flex:1;max-width:820px;margin:0 auto;padding:22px 20px 90px;width:100%}
+.top{display:none;align-items:center;gap:10px;margin-bottom:12px}.top button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}
+.tt{font:700 13px Unbounded,sans-serif;color:var(--blue);text-transform:uppercase;letter-spacing:.04em}
+h2.tp{font:700 26px/1.2 Unbounded,sans-serif;margin:6px 0 4px}.goal{color:var(--muted);margin:0 0 14px}
+.dots{display:flex;gap:6px;margin:10px 0 16px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--blue)}.dots i.ok{background:var(--ok)}
+.card{background:var(--board);border:1px solid var(--line);border-radius:20px;padding:24px 26px;box-shadow:0 2px 10px rgba(30,50,90,.05)}
+.card .kind{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.k-story{background:#e8efff;color:var(--blue)}.k-num{background:#fff2dc;color:#b36500}.k-formula{background:#efe7ff;color:#6a42c2}.k-quiz{background:#e0f5ea;color:var(--ok)}.k-exam{background:#ffe5e5;color:var(--bad)}
+.card h3{font:700 21px/1.3 Unbounded,sans-serif;margin:4px 0 12px}
+.card p{margin:.6em 0}.card ul.big,.card ol.big{padding-left:22px}.card li{margin:.5em 0}
+code,pre.code{font:15px 'JetBrains Mono',monospace;background:#f1f4fa;border-radius:6px;padding:1px 6px}
+pre.code{padding:14px 16px;overflow:auto;line-height:1.5;border:1px solid var(--line)}
+table{border-collapse:collapse;margin:10px 0;width:100%}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;font-size:16px}th{background:var(--side)}
+table.sym td:first-child{white-space:nowrap;font-weight:600;background:#faf7ff}
+.q{font-size:20px;font-weight:600;margin:4px 0 14px}.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:13px 16px;margin:9px 0;font:inherit;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--blue)}.opt.good{border-color:var(--ok);background:#e9f8f0}.opt.bad{border-color:var(--bad);background:#fdecec}
+.why{margin-top:12px;padding:12px 16px;border-radius:12px;background:#fff7e3;border:1px solid #f3dca0}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.btn{border:0;border-radius:14px;padding:13px 22px;font:600 16px Onest,sans-serif;cursor:pointer;background:var(--blue);color:#fff}.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn[disabled]{opacity:.4;cursor:default}
+.fin{text-align:center}.fin .big{font:700 40px Unbounded;color:var(--ok)}
+@media(max-width:860px){#side{position:fixed;left:-310px;z-index:5;transition:left .2s;box-shadow:4px 0 20px rgba(0,0,0,.15)}#side.open{left:0}.top{display:flex}.card{padding:18px}body{font-size:17px}}
+</style></head><body>
+<nav id="side"></nav>
+<main><div class="top"><button id="menu">☰ Темы</button><span class="tt">AACM · Лёгкий курс</span></div><div id="view"></div></main>
+<script>
+const TOPICS = [
+{id:'py', title:'Python для экзамена', goal:'Уметь читать и писать короткие функции про графы.', cards:[
+ {k:'story', h:'Четыре «коробки» Python', b:`<p>Забудь про синтаксис. Запомни четыре коробки:</p>
+ <ul class="big"><li><b>список</b> <code>[3, 1, 2]</code> — ряд пронумерованных ячеек. Порядок есть, повторы можно.</li>
+ <li><b>множество</b> <code>{1, 2, 3}</code> — мешок без повторов. Очень быстро отвечает «есть ли тут X?».</li>
+ <li><b>словарь</b> <code>{'A': ['B','C']}</code> — записная книжка: имя → значение.</li>
+ <li><b>кортеж</b> <code>(u, v)</code> — запечатанная пара. Так записывают ребро.</li></ul>
+ <p>Граф у нас всегда <b>словарь списков</b>: у каждого узла записан список его соседей.</p>`},
+ {k:'num', h:'Читаем граф как словарь', b:`<pre class="code">graph = {'A': ['B', 'C'],
+         'B': ['A'],
+         'C': ['A']}
+
+for u in graph:               # u по очереди: 'A', 'B', 'C'
+    print(u, len(graph[u]))   # A 2 / B 1 / C 1</pre>
+ <p><code>graph['A']</code> — это список <code>['B','C']</code>, значит у A два соседа. Степень узла = <code>len(graph[u])</code>. Число рёбер = сумма степеней / 2 = (2+1+1)/2 = <b>2</b>.</p>`},
+ {k:'quiz', q:'Как получить степень узла u, если граф лежит в словаре graph?', o:['graph[u]','len(graph[u])','len(graph)','graph.degree(u)'], a:1, why:'graph[u] — это список соседей. Его длина и есть степень. len(graph) — это число узлов.'},
+ {k:'quiz', q:'Нужно много раз проверять «был ли я уже в этом узле?». Что хранить?', o:['список','множество','кортеж','строку'], a:1, why:'В множестве проверка «есть ли» занимает одну операцию, в списке приходится перебирать все элементы.'},
+ {k:'exam', h:'Как писать функцию на экзамене', b:`<ol class="big"><li>Прочитай, что подаётся на вход и что вернуть.</li><li>Прогони пример руками.</li><li>Опиши идею одной фразой.</li><li>Пиши код. Имена переменных понятные.</li><li>Проверь на пустом графе и на изолированном узле.</li><li>Скажи сложность словами.</li></ol>`}
+]},
+{id:'cx', title:'Сложность: O, Θ, Ω', goal:'Понимать, как растёт время, и уметь назвать сложность.', cards:[
+ {k:'story', h:'Сколько шагов, если вход вырос в 10 раз?', b:`<p>Сложность отвечает на один вопрос: <b>если данных стало больше, насколько дольше работает программа</b>.</p>
+ <p>Ты ищешь друга в списке из n людей. Если перебирать по одному, в худшем случае n шагов, значит время <b>растёт вместе с n</b>: это O(n). Если для каждой пары людей проверять дружбу, шагов около n², и при десятикратном росте времени уходит в 100 раз больше.</p>`},
+ {k:'num', h:'Те же числа в таблице', b:`<table class="tbl"><tr><th>n</th><th>n</th><th>n log n</th><th>n²</th></tr><tr><td>10</td><td>10</td><td>~33</td><td>100</td></tr><tr><td>1000</td><td>1000</td><td>~10 000</td><td>1 000 000</td></tr></table>
+ <p>Для n = 1000 алгоритм n² делает миллион шагов, а n log n всего десять тысяч. Вот почему сложность важна.</p>`},
+ {k:'formula', h:'Что значат O, Ω, Θ', b:`<table class="sym"><tr><td><b>O(f)</b></td><td>«не хуже чем f» — потолок. Время ≤ c·f(n).</td></tr><tr><td><b>Ω(f)</b></td><td>«не лучше чем f» — пол. Время ≥ c·f(n).</td></tr><tr><td><b>Θ(f)</b></td><td>«ровно порядка f» — и потолок, и пол.</td></tr></table>
+ <p><b>Как упрощать:</b> 3n² + 5n + 7 → оставляем самое большое слагаемое n², выбрасываем константу 3 → <b>Θ(n²)</b>.</p>`},
+ {k:'quiz', q:'Алгоритм делает 4n + 10 шагов. Какая у него сложность?', o:['O(1)','Θ(n)','Θ(n²)','Θ(4n+10)'], a:1, why:'Константы и малые слагаемые выбрасываем, остаётся порядок n.'},
+ {k:'quiz', q:'Два вложенных цикла по n узлов: для каждой пары (u, v) проверяем ребро. Сколько?', o:['O(n)','O(n log n)','O(n²)','O(2ⁿ)'], a:2, why:'n × n пар = n² проверок.'},
+ {k:'exam', h:'Как отвечать про сложность', b:`<p>Не говори просто «O(n)». Говори <b>почему</b>: «внешний цикл идёт по n узлам, внутренний в сумме по всем соседям, то есть 2m раз, значит всего O(n + m)».</p><p>Сначала главное слагаемое, потом вывод.</p>`}
+]},
+{id:'alg', title:'Алгоритмы на графах', goal:'BFS, DFS, Дейкстра, перевод списков.', cards:[
+ {k:'story', h:'Три способа бродить по графу', b:`<ul class="big"><li><b>BFS (в ширину)</b> — круги на воде. Сначала соседи, потом соседи соседей. Нужна <b>очередь</b>. Находит кратчайшие пути (по числу рёбер).</li>
+ <li><b>DFS (в глубину)</b> — лабиринт с ниткой. Идём вглубь до тупика, потом назад. Нужен <b>стек</b>.</li>
+ <li><b>Дейкстра</b> — кратчайший путь, когда у рёбер есть <b>цены</b>.</li></ul>`},
+ {k:'num', h:'BFS на маленьком графе', b:`<p>Граф: A–B, A–C, B–D, C–D. Стартуем из A.</p>
+ <table class="tbl"><tr><th>шаг</th><th>очередь</th><th>что делаем</th></tr><tr><td>0</td><td>[A]</td><td>берём A, добавляем B, C</td></tr><tr><td>1</td><td>[B, C]</td><td>берём B, добавляем D</td></tr><tr><td>2</td><td>[C, D]</td><td>берём C (D уже есть)</td></tr><tr><td>3</td><td>[D]</td><td>берём D</td></tr></table>
+ <p>Расстояния от A: A=0, B=1, C=1, D=2. Цена: каждый узел и каждое ребро по разу, <b>O(n + m)</b>.</p>`},
+ {k:'num', h:'Дейкстра на числах', b:`<p>A→B стоит 4, A→C стоит 1, C→B стоит 2. Прямая дорога в B стоит 4, но через C только 1 + 2 = <b>3</b>.</p>
+ <p>Алгоритм: берём ближайший ещё не готовый узел и «подтягиваем» его соседей: если через него дешевле, обновляем расстояние. Работает только если цены не отрицательные.</p>`},
+ {k:'num', h:'Список смежности → список рёбер', b:`<pre class="code">def convert(graph):
+    edges = []
+    for u in graph:
+        for v in graph[u]:
+            edges.append((u, v))
+    return sorted(edges)</pre>
+ <p>Берём каждого соседа каждого узла и записываем пару. Время: проход O(n + m) плюс сортировка O(m log m). В неориентированном графе каждое ребро появится дважды (u,v) и (v,u): чтобы взять один раз, добавляй только когда u &lt; v.</p>`},
+ {k:'quiz', q:'Нужно найти путь с наименьшим числом рёбер в графе без цен. Что берём?', o:['DFS','BFS','Дейкстру с отрицательными весами','сортировку'], a:1, why:'BFS идёт слоями, поэтому первый раз встреченный узел достигнут кратчайшим путём.'},
+ {k:'quiz', q:'Какая структура нужна для BFS и какая для DFS?', o:['BFS стек, DFS очередь','BFS очередь, DFS стек','обоим очередь','обоим стек'], a:1, why:'Очередь: первым пришёл, первым вышел (идём слоями). Стек: последним пришёл, первым вышел (идём вглубь).'},
+ {k:'exam', h:'Ответ про BFS на странице', b:`<ol class="big"><li>Что делает: обходит граф слоями от s, находит расстояния.</li><li>Как: очередь + множество посещённых.</li><li>Свойства: кратчайшие пути в графе без весов, находит компоненты.</li><li>Цена: O(n + m) со списком смежности, O(n²) с матрицей.</li><li>Пример на 4 узлах (как выше).</li></ol>`}
+]},
+{id:'net', title:'Основы сетей', goal:'Степень, пути, связность, кластеризация.', cards:[
+ {k:'story', h:'Сеть = узлы и связи', b:`<p>Узлы — люди, связи — дружба. Всё, что нам нужно, чтобы описать сеть, это шесть понятий: <b>степень</b> (сколько друзей), <b>расстояние</b> (цепочка знакомых), <b>диаметр</b> (самая длинная из кратчайших цепочек), <b>компонента</b> (кусок, внутри которого все достижимы), <b>гигантская компонента</b> (самый большой кусок), <b>кластеризация</b> (дружат ли мои друзья между собой).</p>`},
+ {k:'num', h:'Один граф, посчитаем всё', b:`<p>Узлы A,B,C,D,E. Связи: A–B, A–C, B–C, C–D, D–E.</p>
+ <pre class="code">A — B
+ \\ /
+  C — D — E</pre>
+ <table class="tbl"><tr><th>узел</th><th>k</th></tr><tr><td>A</td><td>2</td></tr><tr><td>B</td><td>2</td></tr><tr><td>C</td><td>3</td></tr><tr><td>D</td><td>2</td></tr><tr><td>E</td><td>1</td></tr></table>
+ <p>Сумма степеней = 10 = 2 × 5 рёбер. Средняя степень ⟨k⟩ = 10/5 = <b>2</b>. Расстояние A→E = 3 (A–C–D–E), диаметр = 3.</p>`},
+ {k:'formula', h:'Кластеризация по шагам', b:`<p><b>C<sub>i</sub> = L<sub>i</sub> / [k<sub>i</sub>(k<sub>i</sub>−1)/2]</b></p><table class="sym"><tr><td>L<sub>i</sub></td><td>сколько связей реально есть между соседями узла i</td></tr><tr><td>k<sub>i</sub>(k<sub>i</sub>−1)/2</td><td>сколько их могло бы быть (все пары соседей)</td></tr></table>
+ <p>Узел C: соседи A, B, D. Пар 3 (A-B, A-D, B-D). Есть только A–B. C<sub>C</sub> = 1/3. Узел A: соседи B, C, и они связаны → C<sub>A</sub> = 1/1 = 1. Узел E: один сосед, пар нет → 0.</p>`},
+ {k:'quiz', q:'У четырёх узлов степени 3, 2, 2, 1. Сколько в графе рёбер?', o:['8','4','2','3'], a:1, why:'Сумма степеней 3+2+2+1 = 8, а рёбер вдвое меньше: 4.'},
+ {k:'quiz', q:'У узла 4 соседа, и между ними всего 2 связи. Чему равна его кластеризация?', o:['2/4','2/6','2/12','1/2'], a:1, why:'Возможных пар соседей 4·3/2 = 6, есть 2, значит C = 2/6 = 1/3.'},
+ {k:'exam', h:'Что написать', b:`<p>Определи каждый термин в одну фразу, дай формулу (k, ⟨k⟩ = 2L/N, C<sub>i</sub>), приведи мини-пример. Скажи: в реальных сетях кластеризация высокая, расстояния короткие («малый мир»).</p>`}
+]},
+{id:'er', title:'Случайные сети (ER)', goal:'Модель G(N,p), степени, гигантская компонента.', cards:[
+ {k:'story', h:'Монетка для каждой пары', b:`<p>Берём N людей. Для каждой пары бросаем «кривую» монетку: с вероятностью p они дружат. Всё. Это модель Эрдёша–Реньи <b>G(N, p)</b>.</p><p>Так как все пары равноправны, у большинства людей друзей примерно поровну, и людей с 50 друзьями почти не бывает. <b>Хабов нет.</b></p>`},
+ {k:'num', h:'Считаем на 10 людях', b:`<p>N = 10, p = 0.3. Пар = 10·9/2 = 45. Ожидаемое число связей ⟨L⟩ = 45 × 0.3 = <b>13.5</b>. У каждого 9 возможных друзей, поэтому ⟨k⟩ = 9 × 0.3 = <b>2.7</b>.</p>`},
+ {k:'formula', h:'Формулы по буквам', b:`<table class="sym"><tr><td>⟨L⟩ = p·N(N−1)/2</td><td>p × число пар</td></tr><tr><td>⟨k⟩ = p(N−1)</td><td>p × число возможных друзей</td></tr><tr><td>P(k) — Пуассон</td><td>колокол около ⟨k⟩, разброс √⟨k⟩</td></tr></table>`},
+ {k:'story', h:'Гигантская компонента: переход при ⟨k⟩ = 1', b:`<p>Пока у человека в среднем меньше одного друга, сеть — россыпь мелких кучек. Как только в среднем больше одного, кучки слипаются в <b>одну гигантскую компоненту</b>. Это резкий переход, как замерзание воды.</p><p>Пример: N = 1000, при ⟨k⟩ = 0.5 самый большой кусок это десятки узлов, при ⟨k⟩ = 2 в нём уже ~80% всех узлов.</p>`},
+ {k:'quiz', q:'N = 101, p = 0.05. Какова средняя степень ⟨k⟩?', o:['0.05','5','101','2.5'], a:1, why:'⟨k⟩ = p(N−1) = 0.05 × 100 = 5.'},
+ {k:'quiz', q:'При ⟨k⟩ = 0.5 в случайной сети гигантская компонента…', o:['есть','нет','всегда 50%','зависит от p только'], a:1, why:'Порог ⟨k⟩ = 1. Ниже порога сеть состоит из мелких кусков.'},
+ {k:'exam', h:'Ответ «Describe the random network model»', b:`<ol class="big"><li>Определение G(N,p).</li><li>⟨L⟩ и ⟨k⟩ с числами.</li><li>P(k): биномиальное → Пуассон.</li><li>Гигантская компонента при ⟨k⟩ = 1.</li><li>Минус модели: нет хабов, низкая кластеризация C ≈ p.</li></ol>`}
+]},
+{id:'sw', title:'Малый мир и Watts–Strogatz', goal:'Почему расстояния короткие, а кластеризация высокая.', cards:[
+ {k:'story', h:'Шесть рукопожатий', b:`<p>В реальных соцсетях любые двое знакомы через пару-тройку цепочек, но при этом <b>друзья друзей часто дружат между собой</b>. Случайная сеть умеет первое, но не умеет второе. Уоттс и Строгац придумали, как получить оба.</p>`},
+ {k:'num', h:'Числа для случайной сети', b:`<p>N = 1000, ⟨k⟩ = 10. Расстояние ⟨d⟩ ≈ ln N / ln⟨k⟩ = ln 1000 / ln 10 = <b>3</b>. Для N = 1 000 000 всего <b>6</b>. Вот что значит «логарифм».</p><p>Но кластеризация случайной сети C = ⟨k⟩/N = 10/1000 = <b>0.01</b>, а у реальных соцсетей C порядка 0.1–0.5.</p>`},
+ {k:'story', h:'Рецепт Уоттса–Строгаца', b:`<ol class="big"><li>Поставь узлы в <b>кольцо</b> и свяжи каждого с ближайшими соседями. Получится большая кластеризация (друзья рядом), но длинные пути.</li><li>Каждое ребро с вероятностью p <b>перебрось</b> в случайное место.</li></ol><p>Даже малое p (около 1%) создаёт несколько «шорткатов» через всё кольцо: расстояние резко падает, а кластеризация почти не страдает.</p>`},
+ {k:'num', h:'Кольцо в числах', b:`<p>N = 1000, у каждого 10 соседей. d(0) ≈ N/(2·10) = 50, C(0) ≈ 0.67. После p = 0.01: d падает в несколько раз, C ≈ 0.65. Именно этот график C(p)/C(0) и d(p)/d(0) рисуют на экзамене: d падает быстро, C держится.</p>`},
+ {k:'quiz', q:'Что происходит с кольцом, когда p мало (около 0.01)?', o:['Расстояние растёт, C падает','Расстояние резко падает, C почти не меняется','C резко растёт','Ничего'], a:1, why:'Несколько шорткатов сжимают сеть, но почти все соседства остаются, и кластеризация сохраняется.'},
+ {k:'quiz', q:'Почему случайная сеть не описывает соцсети?', o:['У неё нет путей','У неё слишком большая кластеризация','У неё слишком малая кластеризация','У неё нет узлов'], a:2, why:'В ER C ≈ ⟨k⟩/N очень мало, а в реальных сетях высока.'},
+ {k:'exam', h:'Ответ «Describe the Watts–Strogatz model»', b:`<ol class="big"><li>Зачем: ER не даёт высокую C, решётка не даёт короткие пути.</li><li>Построение: кольцо → перебрасываем рёбра с вероятностью p.</li><li>Результат: диапазон p, где d мало, а C велика.</li><li>График C(p)/C(0), d(p)/d(0).</li><li>Минус: P(k) близко к Пуассону, хабов нет.</li></ol>`}
+]},
+{id:'sf', title:'Scale-free сети', goal:'Степенной закон, хабы, значение γ.', cards:[
+ {k:'story', h:'Почти все мелкие, но есть гиганты', b:`<p>Рост людей: почти все 160–190 см, великанов нет. Богатство или число ссылок на сайт: почти все мелкие, но есть чудовищные гиганты. Первое — колокол, второе — <b>степенной закон</b>: P(k) ∼ k<sup>−γ</sup>. Сети с таким законом называют scale-free («без масштаба»), а гигантов в них называют <b>хабами</b>.</p>`},
+ {k:'num', h:'Размер самого большого хаба', b:`<p>N = 10⁶, γ = 2.5, минимальная степень 1. k<sub>max</sub> ≈ N<sup>1/(γ−1)</sup> = 10<sup>6/1.5</sup> = <b>10 000</b>. В случайной сети с тем же ⟨k⟩ самый большой узел был бы порядка 15. Вот это и называют хабами.</p>`},
+ {k:'formula', h:'Что значит γ', b:`<table class="sym"><tr><td>γ &gt; 3</td><td>почти обычная сеть, d ∼ ln N</td></tr><tr><td>2 &lt; γ &lt; 3</td><td>ультрамалый мир d ∼ ln ln N, ⟨k²⟩ расходится</td></tr><tr><td>γ ≤ 2</td><td>почти всё в нескольких хабах</td></tr></table><p>Чем меньше γ, тем толще хвост и тем больше хабов. Для N = 10⁶: ln N ≈ 13.8, а ln ln N ≈ 2.6.</p>`},
+ {k:'quiz', q:'Как выглядит степенной закон на графике с логарифмическими осями?', o:['Колокол','Прямая линия с наклоном −γ','Горизонталь','Парабола'], a:1, why:'Если P ∼ k^−γ, то log P = −γ·log k + const, а это прямая.'},
+ {k:'quiz', q:'Какая сеть имеет хабы?', o:['Случайная ER','Решётка','Scale-free','Кольцо'], a:2, why:'У ER и у решётки степени примерно одинаковы, а хабы возникают при степенном хвосте.'},
+ {k:'exam', h:'Ответ «Discuss the scale-free property»', b:`<ol class="big"><li>Определение P(k) ∼ k<sup>−γ</sup> и log-log график.</li><li>Хабы и сравнение с Пуассоном.</li><li>Значение γ и режимы (γ &gt; 3, 2 &lt; γ &lt; 3).</li><li>Примеры: интернет, WWW, соцсети, белковые сети.</li><li>Последствия: устойчивость и эпидемии (темы 11, 13).</li></ol>`}
+]},
+{id:'ba', title:'Модель Барабаши–Альберт', goal:'Рост + предпочтительное присоединение.', cards:[
+ {k:'story', h:'Богатые становятся богаче', b:`<p>Сеть не появляется сразу. Она <b>растёт</b>: приходит новый узел и подключается к m старым. Но не к случайным, а <b>чаще к тем, у кого уже много связей</b>: популярную страницу чаще цитируют, известного человека чаще добавляют в друзья. Это <b>предпочтительное присоединение</b>.</p>`},
+ {k:'num', h:'Вероятность на числах', b:`<p>В сети 4 узла со степенями 3, 1, 1, 1. Сумма степеней = 6. Новый узел выберет первого с вероятностью 3/6 = <b>0.5</b>, каждого из остальных с вероятностью 1/6.</p>`},
+ {k:'formula', h:'Формула Π(k)', b:`<p><b>Π(k<sub>i</sub>) = k<sub>i</sub> / Σ<sub>j</sub> k<sub>j</sub></b></p><table class="sym"><tr><td>k<sub>i</sub></td><td>степень узла i</td></tr><tr><td>Σ k<sub>j</sub></td><td>сумма степеней всех узлов (= 2L)</td></tr><tr><td>Π</td><td>вероятность, что новый узел выберет i</td></tr></table><p>Результат модели: P(k) ∼ k<sup>−3</sup> при любом m, то есть γ = 3.</p>`},
+ {k:'story', h:'Что если убрать рост или предпочтение', b:`<ul class="big"><li><b>Модель A</b>: рост есть, предпочтения нет (цель случайная) → хвост экспоненциальный, хабов нет.</li><li><b>Модель B</b>: роста нет, предпочтение есть → сеть постепенно становится почти полной.</li></ul><p>Вывод: нужны <b>оба</b> ингредиента. Именно это спрашивают на экзамене.</p>`},
+ {k:'quiz', q:'Степени 2, 2, 1, 1. Вероятность, что новый узел выберет первого?', o:['1/2','1/3','1/6','2/3'], a:1, why:'Сумма степеней 2+2+1+1 = 6, у первого степень 2, вероятность 2/6 = 1/3.'},
+ {k:'quiz', q:'Нужен ли рост, чтобы получить scale-free?', o:['Нет, хватит предпочтения','Да, нужны и рост, и предпочтение','Нужен только рост','Не нужно ни того ни другого'], a:1, why:'Без роста (Model B) закон не стационарен, без предпочтения (Model A) хвост экспоненциальный.'},
+ {k:'exam', h:'Ответ «Describe the BA model»', b:`<ol class="big"><li>Начальное ядро и рост: новый узел приносит m связей.</li><li>Предпочтительное присоединение Π(k) = k/Σk.</li><li>Результат γ = 3, хабы, «first mover advantage».</li><li>Модели A и B: зачем нужны оба ингредиента.</li><li>Ограничения: γ всегда 3, нет высокой кластеризации.</li></ol>`}
+]},
+{id:'fit', title:'Эволюция: fitness (Bianconi–Barabási)', goal:'Почему новички иногда обгоняют старых.', cards:[
+ {k:'story', h:'Новичок побеждает старожила', b:`<p>В BA побеждают те, кто пришёл раньше. А в жизни Google пришёл позже Yahoo и всё равно победил: он был «лучше». Значит, кроме возраста нужна ещё <b>привлекательность</b> η (fitness).</p>`},
+ {k:'num', h:'Сравним двоих', b:`<p>Старый узел: k = 10, η = 0.2 → вес <b>2.0</b>. Новичок: k = 3, η = 1 → вес <b>3.0</b>. Новичок привлекательнее, хотя у него меньше связей.</p>`},
+ {k:'formula', h:'Формула', b:`<p><b>Π<sub>i</sub> = η<sub>i</sub>·k<sub>i</sub> / Σ<sub>j</sub> η<sub>j</sub>·k<sub>j</sub></b></p><p>Это BA, но каждая степень умножается на привлекательность. Если все η равны, получаем обычную BA. Если у одного узла η огромно, он забирает долю всех новых связей («конденсация Бозе–Эйнштейна»).</p>`},
+ {k:'quiz', q:'Если все η одинаковы, модель Bianconi–Barabási превращается в…', o:['ER','Watts–Strogatz','модель Барабаши–Альберт','решётку'], a:2, why:'Одинаковые η сокращаются в числителе и знаменателе.'},
+ {k:'exam', h:'Ответ «Describe the Bianconi–Barabási model»', b:`<ol class="big"><li>Проблема BA: решает только возраст.</li><li>Новое: fitness η, Π ∝ η·k.</li><li>Результат: поздние узлы с большим η догоняют.</li><li>Динамика k(t) ∼ t<sup>β(η)</sup>, распределение степеней — взвешенная сумма степенных.</li><li>Пример: Google против Yahoo.</li></ol>`}
+]},
+{id:'dc', title:'Корреляция степеней', goal:'Дружат ли хабы с хабами.', cards:[
+ {k:'story', h:'С кем дружат популярные', b:`<p>В соцсетях популярные дружат с популярными (<b>ассортативная</b> сеть). В интернете и в белках хабы подключены к мелочи (<b>дизассортативная</b>). Вопрос: зависит ли степень соседа от моей степени?</p>`},
+ {k:'num', h:'Звезда', b:`<p>Центр 0 соединён с 1, 2, 3, 4. Степень центра 4, листьев 1. Для листа сосед это центр со степенью 4, значит k<sub>nn</sub>(1) = <b>4</b>. Для центра соседи листья, значит k<sub>nn</sub>(4) = <b>1</b>. С ростом k значение падает: сеть <b>дизассортативная</b>.</p>`},
+ {k:'formula', h:'k_nn по шагам', b:`<p><b>k<sub>nn</sub>(i) = (1/k<sub>i</sub>) · Σ<sub>j — сосед i</sub> k<sub>j</sub></b>: сложи степени всех соседей и раздели на их количество, то есть найди среднее.</p><p><b>k<sub>nn</sub>(k)</b> — то же среднее по всем узлам степени k. Растёт с k → ассортативная (r &gt; 0). Падает → дизассортативная (r &lt; 0).</p>`},
+ {k:'quiz', q:'k_nn(k) растёт с k. Что это за сеть?', o:['Дизассортативная','Ассортативная','Случайная ER','Пустая'], a:1, why:'У узлов с большим k соседи тоже с большим k: хабы дружат с хабами.'},
+ {k:'exam', h:'Что написать', b:`<p>Определение, формула k<sub>nn</sub>(i), k<sub>nn</sub>(k) и как читать график, коэффициент Пирсона r, 2 примера (соцсети ассортативные, интернет дизассортативный).</p>`}
+]},
+{id:'rob', title:'Устойчивость сетей', goal:'Отказы против атак, порог разрушения.', cards:[
+ {k:'story', h:'Сломать случайный узел или самый главный?', b:`<p><b>Отказ</b> — выходит из строя случайный узел. <b>Атака</b> — специально удаляют самых связанных (хабы). Смотрим, как быстро разваливается гигантская компонента.</p>`},
+ {k:'num', h:'Звезда', b:`<p>Степени 1, 1, 1, 1, 4. ⟨k⟩ = 1.6, ⟨k²⟩ = 4, κ = ⟨k²⟩/⟨k⟩ = 2.5 &gt; 2, значит гигантская компонента есть. Удалили центр (атака): остались 4 одиночки. Удалили лист (отказ): осталась звезда из 4 узлов. Хаб решает всё.</p>`},
+ {k:'formula', h:'Порог разрушения', b:`<p><b>f<sub>c</sub> = 1 − 1/(κ − 1)</b>, где κ = ⟨k²⟩/⟨k⟩ (критерий Моллоя–Рида: гигантская компонента есть, пока κ &gt; 2).</p><p>ER: κ = ⟨k⟩ + 1, значит f<sub>c</sub> = 1 − 1/⟨k⟩. Пример ⟨k⟩ = 4 → f<sub>c</sub> = <b>0.75</b>. Scale-free при γ &lt; 3: ⟨k²⟩ огромно, f<sub>c</sub> → <b>1</b>: случайными отказами сеть почти не сломать.</p>`},
+ {k:'quiz', q:'ER-сеть со ⟨k⟩ = 4. Какую долю узлов нужно случайно убрать, чтобы гигантская компонента исчезла?', o:['25%','50%','75%','100%'], a:2, why:'f_c = 1 − 1/⟨k⟩ = 1 − 1/4 = 0.75.'},
+ {k:'quiz', q:'Почему scale-free сеть «устойчива к отказам, но уязвима к атакам»?', o:['У неё нет хабов','Случайный узел почти всегда мелкий, а удаление хабов рвёт сеть','Она очень маленькая','У неё много компонент'], a:1, why:'Случайный выбор попадает в мелкий узел, а хабы держат всю связность.'},
+ {k:'exam', h:'Ответ «Robustness and attacks»', b:`<ol class="big"><li>Определения отказа и атаки; гигантская компонента как мера.</li><li>Критерий Моллоя–Рида и f<sub>c</sub>.</li><li>ER: плавный распад; scale-free: устойчив/хрупок.</li><li>Виды атак: по степени, по betweenness, с пересчётом.</li><li>Пример: интернет, электросеть.</li></ol>`}
+]},
+{id:'com', title:'Сообщества', goal:'Girvan–Newman и модулярность.', cards:[
+ {k:'story', h:'Группы внутри сети', b:`<p><b>Сообщество</b> — группа узлов, внутри которой связей плотнее, чем наружу. Как найти? <b>Girvan–Newman</b>: найди ребро, через которое проходит больше всего кратчайших путей (это «мост»), удали его, повтори. Сеть распадается на группы.</p>`},
+ {k:'num', h:'Два треугольника и мост', b:`<p>Узлы 1,2,3 — треугольник, 4,5,6 — треугольник, плюс ребро 3–4. Рёбер L = 7. Все пути между «левыми» и «правыми» идут через ребро 3–4, таких пар 3×3 = 9, это максимум. Удаляем мост, получаем два треугольника.</p>`},
+ {k:'formula', h:'Модулярность Q', b:`<p><b>Q = Σ<sub>c</sub> [ L<sub>c</sub>/L − (k<sub>c</sub>/2L)² ]</b></p><table class="sym"><tr><td>L<sub>c</sub>/L</td><td>какая доля всех рёбер лежит внутри группы c</td></tr><tr><td>(k<sub>c</sub>/2L)²</td><td>какая доля лежала бы внутри случайно</td></tr></table><p>Считаем: группа {1,2,3}: L<sub>c</sub> = 3, k<sub>c</sub> = 2+2+3 = 7. 3/7 − (7/14)² = 0.429 − 0.25 = 0.179. Две группы дают <b>Q ≈ 0.357</b>. Все узлы в одной группе дают Q = 0.</p>`},
+ {k:'quiz', q:'Чему равна модулярность, если все узлы в одной группе?', o:['1','0','−1','0.5'], a:1, why:'L_c/L = 1 и (k_c/2L)² = 1, значит Q = 0.'},
+ {k:'quiz', q:'Какое ребро удаляет Girvan–Newman на каждом шаге?', o:['с наименьшим весом','с наибольшим edge betweenness','случайное','соединяющее хабы'], a:1, why:'Мосты между группами несут больше всего кратчайших путей.'},
+ {k:'exam', h:'Ответ «How are communities detected?»', b:`<ol class="big"><li>Определение сообщества.</li><li>GN: betweenness ребра → удалить → пересчитать → дендрограмма.</li><li>Выбор разбиения по максимуму Q, формула Q.</li><li>Greedy Newman: слияния с наибольшим приростом Q.</li><li>Сложность GN ≈ O(L²N), поэтому медленный.</li></ol>`}
+]},
+{id:'sp', title:'Эпидемии: SI, SIS, SIR', goal:'Модели распространения и порог.', cards:[
+ {k:'story', h:'Три модели', b:`<ul class="big"><li><b>SI</b>: здоровый → больной, выздоровления нет, в конце больны все.</li><li><b>SIS</b>: здоровый → больной → снова здоровый (простуда). Есть порог: ниже него болезнь вымирает.</li><li><b>SIR</b>: здоровый → больной → переболел с иммунитетом. Вспышка сама затухает.</li></ul><p>β — вероятность заразить по одной связи, μ — вероятность выздороветь.</p>`},
+ {k:'num', h:'SI на цепочке', b:`<p>Цепочка 1–2–3–4–5, заражён узел 1, β = 1. Шаг 1: {1,2}. Шаг 2: {1,2,3}. Шаг 3: {1,2,3,4}. За t шагов заражены все на расстоянии ≤ t, это просто BFS слоями.</p>`},
+ {k:'num', h:'Порог SIS на числах', b:`<p>β = 0.2, μ = 0.1, значит λ = β/μ = 2. Случайная сеть ⟨k⟩ = 4, порог λ<sub>c</sub> = 1/⟨k⟩ = <b>0.25</b>. Так как 2 &gt; 0.25, болезнь распространяется. При λ = 0.1 &lt; 0.25 она вымерла бы.</p><p>Для сети с хабами порог λ<sub>c</sub> = ⟨k⟩/⟨k²⟩. При γ ≤ 3 момент ⟨k²⟩ огромен, порог ≈ 0: болезнь живёт при любой заразности.</p>`},
+ {k:'quiz', q:'В какой модели в конце заразятся все (в связной сети)?', o:['SI','SIS','SIR','ни в какой'], a:0, why:'В SI выздоровления нет, значит болезнь доходит до каждого.'},
+ {k:'quiz', q:'Почему в scale-free сети порог эпидемии почти нулевой?', o:['Там нет хабов','⟨k²⟩ огромно из-за хабов','Там мало узлов','Там нет связей'], a:1, why:'λ_c = ⟨k⟩/⟨k²⟩, а при γ ≤ 3 знаменатель расходится.'},
+ {k:'exam', h:'Ответ «Describe the epidemic models»', b:`<ol class="big"><li>Компартменты S, I, R и параметры β, μ.</li><li>Три модели и их циклы.</li><li>Порог: λ<sub>c</sub> = 1/⟨k⟩ (однородная), ⟨k⟩/⟨k²⟩ (гетерогенная).</li><li>Вывод про хабы и вакцинацию хабов.</li></ol>`}
+]}
+];
+
+const KEY='aacm-easy-v1';
+let S={pos:{},quiz:{},done:{}};try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const KIND={story:'Простыми словами',num:'Сначала числа',formula:'Формула по буквам',quiz:'Проверь себя',exam:'Как отвечать на экзамене'};
+let cur=TOPICS[0].id;
+const side=document.getElementById('side'),view=document.getElementById('view');
+function qkey(t,i){return t.id+':'+i}
+function renderSide(){
+  side.innerHTML=`<h1>AACM · Лёгкий курс</h1><div class="sub">13 тем по программе курса. Один экран = одна мысль.</div>`+
+  TOPICS.map((t,i)=>`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':i+1}</span>${t.title}</a>`).join('')+
+  `<div class="links"><a href="aacm.html">← Подробный курс и тренажёр кода</a><a href="index.html">← Study hub</a></div>`;
+  side.querySelectorAll('a[data-id]').forEach(a=>a.onclick=()=>{go(a.dataset.id);side.classList.remove('open')});
+}
+function go(id){cur=id;S.last=id;save();render();window.scrollTo(0,0);renderSide()}
+function render(){
+  const t=TOPICS.find(x=>x.id===cur),i=S.pos[t.id]||0,c=t.cards[Math.min(i,t.cards.length-1)];
+  const dots=t.cards.map((_,j)=>`<i class="${j<i?'ok':j===i?'on':''}"></i>`).join('');
+  const last=i>=t.cards.length;
+  let body='';
+  if(last){
+    const nxt=TOPICS[TOPICS.indexOf(t)+1];
+    const quizzes=t.cards.map((c,j)=>[c,j]).filter(x=>x[0].k==='quiz');
+    const right=quizzes.filter(([c,j])=>S.quiz[qkey(t,j)]===c.a).length;
+    body=`<div class="card fin"><div class="big">✓</div><h3>Тема «${t.title}» пройдена</h3><p>Вопросы: ${right} из ${quizzes.length} с первой попытки.</p><div class="nav" style="justify-content:center"><button class="btn ghost" id="again">Пройти заново</button>${nxt?`<button class="btn" id="nxt">Дальше: ${nxt.title} →</button>`:''}</div></div>`;
+  } else if(c.k==='quiz'){
+    const a=S.quiz[qkey(t,i)];
+    body=`<div class="card"><span class="kind k-quiz">${KIND.quiz}</span><div class="q">${c.q}</div>${c.o.map((o,j)=>`<button class="opt ${a!==undefined?(j===c.a?'good':j===a?'bad':''):''}" data-j="${j}" ${a!==undefined?'disabled':''}>${o}</button>`).join('')}${a!==undefined?`<div class="why"><b>${a===c.a?'Верно. ':'Не совсем. '}</b>${c.why}</div>`:''}</div>`;
+  } else {
+    body=`<div class="card"><span class="kind k-${c.k}">${KIND[c.k]}</span><h3>${c.h}</h3>${c.b}</div>`;
+  }
+  const canNext=!(c&&c.k==='quiz'&&S.quiz[qkey(t,i)]===undefined)||last;
+  view.innerHTML=`<div class="tt">Тема ${TOPICS.indexOf(t)+1} из ${TOPICS.length}</div><h2 class="tp">${t.title}</h2><p class="goal">${t.goal}</p><div class="dots">${dots}</div>${body}
+  ${last?'':`<div class="nav"><button class="btn ghost" id="prev" ${i===0?'disabled':''}>← Назад</button><button class="btn" id="next" ${canNext?'':'disabled'}>${i===t.cards.length-1?'Закончить тему':'Дальше →'}</button></div>`}`;
+  view.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{S.quiz[qkey(t,i)]=+b.dataset.j;save();render()});
+  const nx=document.getElementById('next');if(nx)nx.onclick=()=>{S.pos[t.id]=i+1;if(i+1>=t.cards.length)S.done[t.id]=true;save();render();renderSide();window.scrollTo(0,0)};
+  const pv=document.getElementById('prev');if(pv)pv.onclick=()=>{S.pos[t.id]=Math.max(0,i-1);save();render()};
+  const ag=document.getElementById('again');if(ag)ag.onclick=()=>{S.pos[t.id]=0;t.cards.forEach((c,j)=>delete S.quiz[qkey(t,j)]);save();render()};
+  const nt=document.getElementById('nxt');if(nt)nt.onclick=()=>go(TOPICS[TOPICS.indexOf(t)+1].id);
+}
+document.getElementById('menu').onclick=()=>side.classList.toggle('open');
+if(S.last&&TOPICS.some(t=>t.id===S.last))cur=S.last;
+renderSide();render();
+</script></body></html>
