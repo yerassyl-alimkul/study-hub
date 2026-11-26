@@ -157,6 +157,17 @@ header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:
 .menu{display:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:7px 12px;font:600 13px Onest;cursor:pointer}
 .wrap{display:flex;max-width:1180px;margin:0 auto}
 #side{width:300px;flex:none;padding:18px 14px;position:sticky;top:67px;height:calc(100vh - 67px);overflow:auto}
+#side .sbox{position:sticky;top:-18px;background:var(--bg);padding:2px 0 8px;z-index:2}
+#side .sbox input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:500 15px inherit;outline:none}
+#side .sbox input:focus{border-color:var(--ink)}
+#side .sbox .cnt{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:8px 4px 0}
+#side.searching a[data-id],#side.searching .ptt,#side.searching .links,#side.searching .ttl{display:none}
+#side a.sr{display:block;padding:9px 12px;border-radius:12px;font-size:14px;font-weight:500;margin-bottom:2px}
+#side a.sr b{display:block;font-size:12px;color:var(--muted);font-weight:600}
+#side a.sr .sh{display:block;font-weight:700}
+#side a.sr .sn{display:block;font-weight:400;font-size:13px;color:var(--muted);line-height:1.35;margin-top:2px}
+#side a.sr:hover{background:var(--card)}
+mark{background:#ffe27a;color:#17181C;border-radius:3px;padding:0 2px}
 #side .ttl{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:2px 12px 10px}
 #side a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;cursor:pointer}
 #side a:hover{background:var(--card)}#side a.on{background:var(--ink);color:var(--bg)}
@@ -279,9 +290,61 @@ const T=()=>lang==='en'?TOPICS_EN:TOPICS, U=()=>UI[lang];
 let cur=TOPICS[0].id;
 const side=document.getElementById('side'),view=document.getElementById('view');
 function qkey(t,i){return t.id+':'+i}
+let SQ='',HL=[];
+const SX={ru:{ph:'Поиск по курсу…  ( / )',none:'Ничего не найдено',cnt:'Найдено: %1'},en:{ph:'Search the course…  ( / )',none:'Nothing found',cnt:'Found: %1'}};
+const IDX={};
+const stripT=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim()};
+const escH=x=>x.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+const escR=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function sIndex(){
+  if(IDX[lang])return IDX[lang];
+  const r=[];
+  T().forEach(t=>t.cards.forEach((c,j)=>{
+    const txt=stripT([c.h||'',c.b||'',c.q||'',(c.o||[]).join(' '),c.why||''].join(' '));
+    r.push({id:t.id,ti:stripT(t.title),j,h:stripT(c.h||c.q||''),txt,low:(t.title+' '+txt).toLowerCase()});
+  }));
+  return IDX[lang]=r;
+}
+function doSearch(q){
+  SQ=q;const box=document.getElementById('sres');if(!box)return;
+  const words=q.toLowerCase().split(/\s+/).filter(w=>w.length>=2);
+  side.classList.toggle('searching',words.length>0);
+  if(!words.length){box.innerHTML='';return}
+  const sx=SX[lang];
+  const res=sIndex().filter(x=>words.every(w=>x.low.includes(w))).map(x=>({x,sc:(words.some(w=>x.h.toLowerCase().includes(w))?2:0)+(words.some(w=>x.ti.toLowerCase().includes(w))?1:0)})).sort((a,b)=>b.sc-a.sc);
+  if(!res.length){box.innerHTML='<div class="cnt">'+sx.none+'</div>';return}
+  const re=new RegExp('('+words.map(escR).join('|')+')','gi');
+  box.innerHTML='<div class="cnt">'+f(sx.cnt,res.length)+'</div>'+res.slice(0,40).map(({x})=>{
+    const lo=x.txt.toLowerCase();let at=-1;for(const w of words){const k=lo.indexOf(w);if(k>=0&&(at<0||k<at))at=k}
+    const a=Math.max(0,at-40),sn=(a>0?'…':'')+x.txt.slice(a,a+130)+(a+130<x.txt.length?'…':'');
+    return `<a class="sr" data-sid="${x.id}" data-j="${x.j}"><b>${escH(x.ti)}</b><span class="sh">${escH(x.h).replace(re,'<mark>$1</mark>')}</span><span class="sn">${escH(sn).replace(re,'<mark>$1</mark>')}</span></a>`;
+  }).join('');
+  box.querySelectorAll('a.sr').forEach(a=>a.onclick=()=>{
+    S.pos[a.dataset.sid]=+a.dataset.j;save();HL=words;go(a.dataset.sid);side.classList.remove('open');
+  });
+}
+function hlMark(){
+  if(!HL.length)return;
+  const re=new RegExp('('+HL.map(escR).join('|')+')','gi');
+  const w=document.createTreeWalker(view,NodeFilter.SHOW_TEXT,{acceptNode:n=>(n.parentElement&&n.parentElement.closest('script,style,mark'))?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const ns=[];while(w.nextNode())ns.push(w.currentNode);
+  let first=null;
+  ns.forEach(n=>{
+    const parts=n.nodeValue.split(re);if(parts.length<2)return;
+    const fr=document.createDocumentFragment();
+    parts.forEach((p,k)=>{if(k%2){const m=document.createElement('mark');m.textContent=p;fr.appendChild(m);if(!first)first=m}else if(p)fr.appendChild(document.createTextNode(p))});
+    n.parentNode.replaceChild(fr,n);
+  });
+  HL=[];
+  if(first)first.scrollIntoView({block:'center'});
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();side.classList.add('open');const q=document.getElementById('q');if(q)q.focus()}
+});
 function renderSide(){
-  side.innerHTML=`<div class="ttl">${U().ttl}</div>`+T().map((t,i,A)=>(t.part&&(i===0||A[i-1].part!==t.part)?`<div class="ptt">${t.part}</div>`:'')+`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':(i||'?')}</span>${t.title}</a>`).join('')+
+  side.innerHTML=`<div class="sbox"><input id="q" type="search" autocomplete="off" placeholder="${SX[lang].ph}"><div id="sres"></div></div><div class="ttl">${U().ttl}</div>`+T().map((t,i,A)=>(t.part&&(i===0||A[i-1].part!==t.part)?`<div class="ptt">${t.part}</div>`:'')+`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':(i||'?')}</span>${t.title}</a>`).join('')+
   `<div class="links"><a href="mmds.html">${U().full}</a><a href="index.html">${U().hub}</a></div>`;
+  {const qi=document.getElementById('q');qi.value=SQ;qi.oninput=()=>doSearch(qi.value);qi.onkeydown=e=>{if(e.key==='Escape'){qi.value='';doSearch('')}};doSearch(SQ)}
   side.querySelectorAll('a[data-id]').forEach(a=>a.onclick=()=>{go(a.dataset.id);side.classList.remove('open')});
   document.getElementById('menu').textContent='☰ '+U().topics;
   document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
@@ -349,7 +412,7 @@ function render(){
   } else body=`<div class="card${c.k==='note'||c.k==='exam'||c.b.startsWith('<div class="nb')?'':' sheet'}"><span class="kind k-${c.k}">${u.kinds[c.k]}</span><h3>${c.h}</h3>${c.k==='exam'?'<div class="nb ex">'+c.b+'</div>':c.b}</div>`;
   const canNext=last||!(c.k==='quiz'&&S.quiz[qkey(t,i)]===undefined);
   view.innerHTML=`<div class="tag">${f(u.of,Ts.indexOf(t),Ts.length-1)}</div><h2 class="tp">${t.title}</h2><p class="goal">${t.goal}</p><div class="dots">${dots}</div>${body}${last?'':`<div class="nav"><button class="btn ghost" id="prev" ${i===0?'disabled':''}>${u.prev}</button><button class="btn" id="next" ${canNext?'':'disabled'}>${i===t.cards.length-1?u.finish:u.next}</button></div>`}`;
-  nbify();glossify();
+  nbify();glossify();hlMark();
   view.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{S.quiz[qkey(t,i)]=+b.dataset.j;save();render()});
   const nx=document.getElementById('next');if(nx)nx.onclick=()=>{S.pos[t.id]=i+1;if(i+1>=t.cards.length)S.done[t.id]=true;save();render();renderSide();window.scrollTo(0,0)};
   const pv=document.getElementById('prev');if(pv)pv.onclick=()=>{S.pos[t.id]=Math.max(0,i-1);save();render()};
