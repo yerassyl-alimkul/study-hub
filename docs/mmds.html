@@ -450,6 +450,8 @@ table.t th{color:var(--marker)}
 a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
 a:hover{color:var(--marker)}
 html[data-lang="en"] .l-ru,html[data-lang="ru"] .l-en{display:none!important}
+.easybtn{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;margin:6px 0 2px;padding:11px 20px;border-radius:22px;background:#E2D47E;color:#17181C!important;font:600 15px var(--f-body);text-decoration:none;border:1px solid rgba(23,24,28,.18)}.easybtn:hover{background:#d8c866}.easybtn b{font-weight:700}
+
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&display=swap">
 <style id="julyera-skin">
@@ -2551,12 +2553,14 @@ function renderTerms(){
 /* ---------- lessons ---------- */
 const holder=document.getElementById('v-lessons');
 const inited={};
+const EASYMAP = {"r1": "reg", "r2": "poly", "r3": "jac", "r4": "res", "a4": "pca", "c2": "clu", "c3": "clu", "c4": "clu", "o2": "gd", "o3": "gd", "o4": "gd", "o5": "newton", "s4": "reg"};
 function lessonShell(l){
   const i=ORDER.indexOf(l.id), prev=ORDER[i-1], next=ORDER[i+1];
   const g=GROUPS.find(w=>w.ids.includes(l.id));
   return `
   <div class="vhead"><span class="tag">${l.id.toUpperCase()} · ${g?g.name:''}</span>
     <h1>${l.title}</h1><p class="en">${esc(l.en)}</p></div>
+  ${EASYMAP[l.id] ? `<a class="easybtn" href="mmds-easy.html#${EASYMAP[l.id]}"><span>☺</span> Полный курс с выводами по этой теме <b>→</b></a>` : ''}
   <section class="board short"><h2>Кратко</h2>${l.short}</section>
   ${l.html}
   <section class="board" data-quick></section>
