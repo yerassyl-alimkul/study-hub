@@ -2553,14 +2553,14 @@ function renderTerms(){
 /* ---------- lessons ---------- */
 const holder=document.getElementById('v-lessons');
 const inited={};
-const EASYMAP = {"r1": "reg", "r2": "poly", "r3": "jac", "r4": "res", "a4": "pca", "c2": "clu", "c3": "clu", "c4": "clu", "o2": "gd", "o3": "gd", "o4": "gd", "o5": "newton", "s4": "reg"};
+const EASYMAP = {"s1": "st1", "s2": "st1", "s3": "st2", "s4": "st3", "r1": "reg", "r2": "poly", "r3": "jac", "r4": "res", "a1": "la1", "a2": "la2", "a3": "la3", "a4": "pca", "c1": "dist", "c2": "clu", "c3": "clu", "c4": "clu", "o1": "opt1", "o2": "gd", "o3": "gd", "o4": "hb", "o5": "newton"};
 function lessonShell(l){
   const i=ORDER.indexOf(l.id), prev=ORDER[i-1], next=ORDER[i+1];
   const g=GROUPS.find(w=>w.ids.includes(l.id));
   return `
   <div class="vhead"><span class="tag">${l.id.toUpperCase()} · ${g?g.name:''}</span>
     <h1>${l.title}</h1><p class="en">${esc(l.en)}</p></div>
-  ${EASYMAP[l.id] ? `<a class="easybtn" href="mmds-easy.html#${EASYMAP[l.id]}"><span>☺</span> Полный курс с выводами по этой теме <b>→</b></a>` : ''}
+  ${EASYMAP[l.id] ? `<a class="easybtn" href="mmds-easy.html#${EASYMAP[l.id]}"><span>☺</span> Единый курс по этой теме: выводы, примеры, эталонные ответы <b>→</b></a>` : ''}
   <section class="board short"><h2>Кратко</h2>${l.short}</section>
   ${l.html}
   <section class="board" data-quick></section>
