@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MMMDS · Full course · JulYera study hub</title>
+<script>
+/* тема: auto | light | dark, хранится в study-theme (синхронизируется с Telegram) */
+(function(){
+  var R=document.documentElement, m='auto';
+  try{m=localStorage.getItem('study-theme')||'auto'}catch(e){}
+  function sys(){var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData&&w.colorScheme) return w.colorScheme; return (window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}
+  function apply(){
+    var r=m==='auto'?sys():m; R.setAttribute('data-theme',r); R.style.colorScheme=r;
+    var b=document.querySelector('.themebtn'); if(b){b.textContent=m==='auto'?'◐':(m==='dark'?'☾':'☀'); b.title={auto:'Тема: авто',light:'Тема: светлая',dark:'Тема: тёмная'}[m]; b.setAttribute('aria-label',b.title)}
+    try{var w=window.Telegram&&Telegram.WebApp; if(w&&w.initData){w.setHeaderColor&&w.setHeaderColor(r==='dark'?'#121315':'#FBFBFA'); w.setBackgroundColor&&w.setBackgroundColor(r==='dark'?'#121315':'#FBFBFA')}}catch(e){}
+  }
+  window.__theme={get:function(){return m},apply:apply,cycle:function(){m=m==='auto'?'light':(m==='light'?'dark':'auto'); try{localStorage.setItem('study-theme',m)}catch(e){} apply()}};
+  apply();
+  function mount(){
+    apply();
+    if(document.querySelector('.themebtn')) return;
+    var anchor=document.querySelector('[data-langsw]'); if(!anchor) return;
+    var b=document.createElement('button'); b.type='button'; b.className='themebtn'; b.onclick=function(){window.__theme.cycle()};
+    anchor.parentNode.insertBefore(b,anchor); apply();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+  window.addEventListener('load',apply);
+  try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',apply)}catch(e){}
+  /* если Telegram подтянул более новый study-theme из облака, страница перезагрузится синхронизацией */
+})();
+</script>
+<style id="theme-fix">
+.themebtn{font:600 15px/1 system-ui,sans-serif;width:34px;height:34px;border-radius:50%;border:1px solid var(--line,var(--edge,#E6E6E1));background:var(--card,var(--board,#fff));color:var(--ink,#17181C);cursor:pointer;flex:none;padding:0}
+.themebtn:hover{border-color:#557546}
+/* логотип B */
+.lgB{display:flex;flex-direction:column;line-height:1;gap:5px}
+.lgB .w{font:600 19px/1 Unbounded,sans-serif;letter-spacing:-.01em;color:var(--ink,#17181C);white-space:nowrap}
+.lgB .w i{font-style:normal;color:#557546}
+.lgB .w u{display:inline-block;width:6px;height:6px;border-radius:50%;background:#E2D47E;margin-left:3px;text-decoration:none}
+.lgB .s{display:flex;align-items:center;gap:6px;font:600 9px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted,#5D5F69);white-space:nowrap}
+.lgB .s s{display:block;width:18px;height:1.5px;background:#557546;text-decoration:none}
+:root[data-theme="dark"] .lgB .w i,:root[data-theme="dark"] .lgB .s s{color:#8DB57B;background:#8DB57B}
+:root[data-theme="dark"] .lgB .w i{background:none}
+/* пастельные плашки в тёмной теме: локально светлая палитра, чтобы графики читались */
+:root[data-theme="dark"] .ex,:root[data-theme="dark"] .tint-yel,:root[data-theme="dark"] .tint-blue,:root[data-theme="dark"] .tint-mint,:root[data-theme="dark"] .short + .board{
+ --ink:#17181C;--muted:#3b3d46;--line:rgba(23,24,28,.22);--edge:rgba(23,24,28,.22);--grid:rgba(23,24,28,.2);--iso:rgba(23,24,28,.2);
+ --soft:rgba(255,255,255,.45);--card:#FFFFFF;--bg:#FBFBFA;--paper:rgba(255,255,255,.5);
+ --green:#3F5F33;--blue:#3F5F33;--marker:#8A6A00;--violet:#3F6C96;--ok:#2F5A26;--bad:#A33626;--ok-soft:#E4EDDF;--bad-soft:#F6E3DF;--hi:#FFF3A0;color-scheme:light;color:#17181C}
+:root[data-theme="dark"] .short + .board{--board:#E2D47E}
+:root[data-theme="dark"] .ex .controls label,:root[data-theme="dark"] .ex p,:root[data-theme="dark"] .ex li{color:#17181C}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* JulYera study sync: Telegram CloudStorage <-> localStorage, вход только через бота */
+(function(){
+  var BOT_URL='https://t.me/dsstudyhub_bot';                 // ссылка на бота, например https://t.me/ИМЯ_БОТА
+  var PFX=/^(imsds-|mmmds-|aacm-|study-)/, CH=3500, tg=window.Telegram&&Telegram.WebApp;
+  var inTg=!!(tg&&tg.initData);
+  var dev=false; try{ if(/[?&]dev=1/.test(location.search)) sessionStorage.setItem('dev','1'); dev=sessionStorage.getItem('dev')==='1'; }catch(e){}
+  var origSet=Storage.prototype.setItem;
+  function gate(){
+    if(inTg||dev) return;
+    var s=document.createElement('style');
+    s.textContent='#gate{position:fixed;inset:0;z-index:99999;background:#FBFBFA;color:#17181C;display:grid;place-items:center;padding:24px;text-align:center;font:16px/1.5 Onest,system-ui,sans-serif}#gate b{display:block;font:600 22px Unbounded,sans-serif;margin-bottom:10px}#gate p{max-width:34ch;margin:0 auto 18px;color:#5D5F69}#gate a{display:inline-block;background:#557546;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600}';
+    document.head.appendChild(s);
+    function mk(){ var d=document.createElement('div'); d.id='gate'; d.innerHTML='<div><b>JulYera study hub</b><p>Обучалки открываются только через Telegram-бота: так прогресс привязан к твоему аккаунту.</p>'+(BOT_URL?'<a href="'+BOT_URL+'">Открыть бота</a>':'')+'</div>'; document.body.appendChild(d); document.body.style.overflow='hidden'; }
+    if(document.body) mk(); else document.addEventListener('DOMContentLoaded',mk);
+  }
+  /* gate() отключён: сайт открывается и без бота, прогресс хранится в браузере, в Telegram синхронизируется */
+  if(!inTg) return;
+  try{ tg.ready(); tg.expand(); }catch(e){}
+  var cs=tg.CloudStorage, timers={};
+  function lsKeys(){ var o=[]; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(PFX.test(k)) o.push(k); } return o; }
+  function push(k){
+    var v=localStorage.getItem(k); if(v==null) return;
+    var ts=+localStorage.getItem('__ts_'+k)||Date.now(), n=Math.max(1,Math.ceil(v.length/CH));
+    for(var i=0;i<n;i++) cs.setItem(k+'_'+i, v.slice(i*CH,(i+1)*CH));
+    cs.setItem(k+'_m', JSON.stringify({n:n,ts:ts}));
+  }
+  Storage.prototype.setItem=function(k,v){
+    origSet.call(this,k,v);
+    if(this===localStorage && PFX.test(k) && k.indexOf('__ts_')!==0){
+      origSet.call(this,'__ts_'+k,String(Date.now()));
+      clearTimeout(timers[k]); timers[k]=setTimeout(function(){push(k)},1500);
+    }
+  };
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) lsKeys().forEach(push); });
+  cs.getKeys(function(err,keys){
+    if(err||!keys) return;
+    var metas=keys.filter(function(x){return /_m$/.test(x)}), left=metas.length, changed=false, seen={};
+    function finish(){
+      lsKeys().forEach(function(k){ if(!seen[k]) push(k); });
+      var done=false; try{ done=sessionStorage.getItem('synced')==='1'; }catch(e){}
+      if(changed && !done){ try{sessionStorage.setItem('synced','1');}catch(e){} location.reload(); }
+    }
+    if(!left) return finish();
+    metas.forEach(function(mk){
+      var k=mk.slice(0,-2); seen[k]=1;
+      cs.getItem(mk,function(e,mv){
+        var m={}; try{m=JSON.parse(mv)}catch(x){}
+        var lts=+localStorage.getItem('__ts_'+k)||0;
+        if(m.ts>lts && m.n){
+          var names=[]; for(var i=0;i<m.n;i++) names.push(k+'_'+i);
+          cs.getItems(names,function(e2,vals){
+            if(!e2&&vals){ var s=''; names.forEach(function(nm){ s+=vals[nm]||''; });
+              if(s && s!==localStorage.getItem(k)){ origSet.call(localStorage,k,s); changed=true; }
+              origSet.call(localStorage,'__ts_'+k,String(m.ts)); }
+            if(--left===0) finish();
+          });
+        } else { if(lts>m.ts) push(k); if(--left===0) finish(); }
+      });
+    });
+  });
+})();
+</script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JulYera · study hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FBFBFA;--ink:#17181C;--muted:#5D5F69;--line:#E6E6E1;--green:#557546;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Onest,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.bt{display:flex;flex-direction:column;line-height:1}.bt b{font:600 17px/1 Unbounded,sans-serif;letter-spacing:-.01em}
+.bt small{font:600 9.5px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.lang{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12px Onest,sans-serif;padding:7px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+main{max-width:980px;margin:0 auto;padding:40px 20px 60px}
+.tag{font:600 11px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+h1{font:600 clamp(28px,5vw,44px)/1.1 Unbounded,sans-serif;margin:10px 0 8px}h1 em{font-style:normal;color:var(--green)}
+.sub{color:var(--muted);max-width:56ch;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.c{display:flex;flex-direction:column;gap:10px;border-radius:26px;padding:26px;color:#17181C;text-decoration:none;min-height:230px;transition:transform .15s}
+.c:hover{transform:translateY(-3px)}.c .k{font:600 12px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.c h2{font:600 24px/1.2 Unbounded,sans-serif;margin:0}.c p{margin:0;opacity:.85}.c .st{margin-top:auto;font:600 14px Onest;display:flex;justify-content:space-between;align-items:center}
+:root[data-theme="dark"]{--bg:#121315;--ink:#F1F1EE;--muted:#A5A7B0;--line:#2C2E34;--green:#8DB57B;--card:#1B1C20}
+.c{--ink:#17181C}
+.bar{height:6px;border-radius:3px;background:rgba(23,24,28,.15);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:#17181C;width:0}
+.how{margin:28px 0 0;border:1px solid var(--line);border-radius:20px;padding:6px 20px;background:var(--card);max-width:760px}.how summary{cursor:pointer;font:700 15px Onest,system-ui,sans-serif;padding:12px 0;list-style:none}.how summary::-webkit-details-marker{display:none}.how summary:after{content:"＋";float:right;color:var(--muted)}.how[open] summary:after{content:"−"}.how ol{margin:0 0 14px;padding-left:20px;color:var(--muted);line-height:1.6}.how li{margin:8px 0}.how b{color:var(--ink)}
+</style>
+<style>
+:root{--bg:#FBFBFA;--ink:#17181C;--muted:#5D5F69;--line:#E6E6E1;--green:#557546;--card:#fff;--yel:#E2D47E;--mint:#A9C89D;--sky:#C9D8FA;--bad:#A33626;--ok:#2F5A26;--code:#F1F1EC}
+:root[data-theme="dark"]{--bg:#121315;--ink:#F1F1EE;--muted:#A5A7B0;--line:#2C2E34;--green:#8DB57B;--card:#1B1C20;--bad:#E58A7A;--ok:#8DB57B;--code:#24262B}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:18px/1.6 Onest,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:6}
+.brand{text-decoration:none;color:inherit}
+.lang{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12px Onest,sans-serif;padding:7px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.menu{display:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:7px 12px;font:600 13px Onest;cursor:pointer}
+.wrap{display:flex;max-width:1180px;margin:0 auto}
+#side{width:300px;flex:none;padding:18px 14px;position:sticky;top:67px;height:calc(100vh - 67px);overflow:auto}
+#side .ttl{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:2px 12px 10px}
+#side a{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;cursor:pointer}
+#side a:hover{background:var(--card)}#side a.on{background:var(--ink);color:var(--bg)}
+#side a .n{width:24px;height:24px;border-radius:50%;background:var(--yel);color:#17181C;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+#side a.done .n{background:var(--mint)}
+#side .links{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}#side .links a{font-size:14px;color:var(--muted)}
+main{flex:1;min-width:0;max-width:780px;padding:22px 20px 90px}
+.tag{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+h2.tp{font:700 clamp(24px,4.4vw,34px)/1.15 Unbounded,sans-serif;margin:8px 0 4px}.goal{color:var(--muted);margin:0 0 14px}
+.dots{display:flex;gap:6px;margin:12px 0 16px}.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--ink)}.dots i.ok{background:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px 28px}
+.kind{display:inline-block;font:600 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;padding:5px 11px;border-radius:20px;margin-bottom:10px;color:#17181C}
+.k-story{background:var(--sky)}.k-num{background:var(--yel)}.k-formula{background:#D9CCF0}.k-quiz{background:var(--mint)}.k-exam{background:#F2C7BE}
+.card h3{font:700 21px/1.3 Unbounded,sans-serif;margin:4px 0 12px}
+.card p{margin:.6em 0}.card li{margin:.5em 0}.card ul.big,.card ol.big{padding-left:22px}
+code,pre.code{font:15px 'JetBrains Mono',monospace;background:var(--code);border-radius:6px;padding:1px 6px}
+pre.code{padding:14px 16px;overflow:auto;line-height:1.5;border:1px solid var(--line)}
+table{border-collapse:collapse;margin:10px 0;width:100%}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;font-size:16px}th{background:var(--code)}
+table.sym td:first-child{white-space:nowrap;font-weight:600;background:var(--code)}
+.q{font-size:20px;font-weight:600;margin:4px 0 14px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:13px 16px;margin:9px 0;font:inherit;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--green)}.opt.good{border-color:var(--green);background:rgba(85,117,70,.16)}.opt.bad{border-color:var(--bad);background:rgba(163,54,38,.14)}
+.why{margin-top:12px;padding:12px 16px;border-radius:14px;background:rgba(226,212,126,.28);border:1px solid rgba(226,212,126,.8)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.btn{border:0;border-radius:20px;padding:13px 24px;font:600 15px Onest,sans-serif;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}.btn[disabled]{opacity:.35;cursor:default}
+.fin{text-align:center}.fin .big{font:700 44px Unbounded;color:var(--green)}
+@media(max-width:860px){.menu{display:inline-block}#side{position:fixed;left:-320px;top:67px;z-index:5;background:var(--bg);border-right:1px solid var(--line);transition:left .2s;width:290px}#side.open{left:0}.card{padding:18px}body{font-size:17px}.lang{margin-left:0}header .sp{margin-left:auto}}
+.k-proof{background:#F6D9A8}.card .warn{background:#FFF2C9;color:#3b3200;border-radius:12px;padding:10px 14px}:root[data-theme=dark] .card .warn{background:#3b3516;color:#F1E7B0}table.tbl,table.sym{border-collapse:collapse;width:100%;margin:10px 0;font-size:16px;display:block;overflow-x:auto}table.tbl th,table.tbl td,table.sym td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}table.tbl th{background:var(--code)}</style></head><body>
+<header><a class="brand" href="index.html" aria-label="JulYera study hub"><span class="lgB"><span class="w">Jul<i>Y</i>era<u></u></span><span class="s"><s></s>study hub</span></span></a><span class="sp"></span><button class="menu" id="menu"></button>
+<span class="lang" data-langsw><button data-l="ru" aria-pressed="true">RU</button><button data-l="en" aria-pressed="false">EN</button></span></header>
+<div class="wrap"><nav id="side"></nav><main><div id="view"></div></main></div>
+<script>
+const ANS = {
+reg:`<p><b>Linear regression.</b> Линейная регрессия моделирует зависимость y от x прямой y = αx + β + r, где α — наклон (slope), β — свободный член (intercept), r — остаток (ошибка).</p>
+<p><b>Остаток</b> r<sub>i</sub> = y<sub>i</sub> − αx<sub>i</sub> − β. Параметры выбираются так, чтобы минимизировать сумму квадратов остатков E(α,β) = Σr<sub>i</sub>².</p>
+<p><b>Вывод.</b> ∂E/∂β = 0 даёт β = ȳ − αx̄. ∂E/∂α = 0 после подстановки β даёт α = Σ(x<sub>i</sub>−x̄)(y<sub>i</sub>−ȳ) / Σ(x<sub>i</sub>−x̄)² = cov(x,y)/var(x). Гессиан положительно определён (определитель 4N·S<sub>xx</sub> &gt; 0), значит это единственный минимум.</p>
+<p><b>Пример.</b> x = 1..5, y = 2,4,5,4,5: α = 6/10 = 0.6, β = 4 − 0.6·3 = 2.2, SSR = 2.4.</p>
+<p><b>Alpha / Beta (в обозначениях лекции):</b> α = slope = cov(x,y)/var(x), β = intercept = mean(y) − α·mean(x). Прямая проходит через (x̄, ȳ).</p>`,
+err:`<p><b>Sum of Squared Residuals (SSR/SSE).</b> SSR = Σ<sub>i=1..N</sub> r<sub>i</sub>² = Σ(y<sub>i</sub> − f(x<sub>i</sub>,α))² — функция E(α), которую минимизирует метод наименьших квадратов. Возведение в квадрат убирает знаки, штрафует большие ошибки сильнее и делает функцию гладкой и выпуклой (для линейной модели).</p>
+<p><b>MSE</b> = SSR/N — средний квадрат ошибки (RMSE = √MSE в единицах y). Для тестовых данных это основной критерий качества прогноза.</p>
+<p><b>R²</b> = 1 − SSR/SST, где SST = Σ(y<sub>i</sub>−ȳ)². Вывод: SST = SSR + Σ(ŷ<sub>i</sub>−ȳ)², потому что остатки ортогональны ŷ − ȳ.</p>
+<p><b>Пример:</b> остатки −0.8; 0.6; 1.0; −0.6; −0.2 → SSR = 2.4, MSE = 0.48, SST = 6, R² = 0.6.</p>`,
+ols:`<p><b>OLS (Ordinary Least Squares)</b> — метод наименьших квадратов: из всех параметров выбирается вектор a, минимизирующий E(a) = ‖y − Xa‖².</p>
+<p><b>Вывод.</b> E = yᵀy − 2aᵀXᵀy + aᵀXᵀXa. Градиент: ∇E = −2Xᵀy + 2XᵀXa = 0 ⇒ нормальные уравнения <b>XᵀXa = Xᵀy</b> ⇒ <b>a = (XᵀX)⁻¹Xᵀy</b> (при rank X = p). Гессиан 2XᵀX положительно определён ⇒ единственный глобальный минимум.</p>
+<p><b>Геометрия:</b> Xᵀ(y − Xa) = 0, остатки ортогональны столбцам X, ŷ = Xa — проекция y на пространство столбцов. В простой регрессии это даёт α = cov(x,y)/var(x), β = ȳ − αx̄.</p>
+<p><b>Пример:</b> XᵀX = [[55,15],[15,5]], Xᵀy = [66,20] ⇒ α = 0.6, β = 2.2.</p>`,
+poly:`<p><b>Polynomial regression.</b> Модель y = α<sub>0</sub> + α<sub>1</sub>x + … + α<sub>p</sub>x<sup>p</sup> + r нелинейна по x, но <b>линейна по параметрам α</b>, поэтому это частный случай множественной линейной регрессии.</p>
+<p><b>Как считать:</b> 1) выбрать степень p; 2) построить матрицу Вандермонда X (X<sub>ij</sub> = x<sub>i</sub><sup>j</sup>, j = 0..p); 3) составить нормальные уравнения XᵀXα = Xᵀy; 4) решить α = (XᵀX)⁻¹Xᵀy; 5) вычислить SSR; 6) выбрать степень по cross-validation (на обучающих данных SSR падает с ростом p, при p = N−1 кривая проходит через все точки, но переобучена).</p>
+<p><b>Пример:</b> точки (−1,2), (0,1), (1,2), (2,5), p = 2 ⇒ XᵀX = [[4,2,6],[2,6,8],[6,8,18]], Xᵀy = [10,10,24] ⇒ α = (1,0,1), y = x² + 1.</p>`,
+res:`<p><b>Resampling</b> — повторное разбиение данных на обучающую и тестовую части для оценки способности модели предсказывать новые данные (ошибка на обучающих данных занижена и приводит к переобучению).</p>
+<p><b>Методы (лекция):</b> holdout (одно разбиение); leave-p-out (все C(N,p) разбиений, слишком дорого); leave-one-out (N моделей); k-fold (данные на k частей, каждая по разу тест, k моделей; k = N совпадает с LOO). Оценка = среднее ошибок на тестовых частях.</p>
+<p><b>Применение:</b> выбор степени полинома, числа признаков, гиперпараметров — берут вариант с минимальной CV-ошибкой.</p>
+<p><b>Bootstrap</b> (общая теория): выборка с возвращением, каждая точка попадает с вероятностью 1 − (1 − 1/N)<sup>N</sup> → 1 − e<sup>−1</sup> ≈ 0.632.</p>`,
+sel:`<p><b>Forward / backward selection</b> — жадные методы выбора признаков в регрессии, когда перебор всех 2<sup>p</sup> подмножеств невозможен.</p>
+<p><b>Forward:</b> старт с пустой модели; на каждом шаге добавляем признак, дающий наибольшее улучшение критерия; останавливаемся, когда улучшения нет. <b>Backward:</b> старт со всех признаков; на каждом шаге удаляем наименее полезный; останавливаемся, когда удаление ухудшает критерий. <b>Stepwise</b> — комбинация.</p>
+<p><b>Критерии:</b> adjusted R², AIC = N ln(SSR/N) + 2k, BIC = N ln(SSR/N) + k ln N, CV-ошибка, F-тест. Нельзя использовать обычные SSR/R² (они улучшаются при добавлении любого признака).</p>
+<p><b>Минусы:</b> жадность (не гарантирует лучший набор), backward требует N &gt; p, мультиколлинеарность. (Тема не из слайдов, это общая теория.)</p>`,
+jac:`<p><b>Jacobian.</b> Матрица первых частных производных. Для F: ℝⁿ → ℝᵐ: J<sub>ij</sub> = ∂F<sub>i</sub>/∂x<sub>j</sub> (m×n). В подгонке модели y = f(x,α): J<sub>ij</sub> = ∂f(x<sub>i</sub>,α)/∂α<sub>j</sub> (N×p). Даёт линейное приближение F(x+d) ≈ F(x) + J d.</p>
+<p><b>Нелинейный МНК (Gauss–Newton).</b> Нормальные уравнения нелинейны по α, замкнутого решения нет ⇒ итерации α<sup>k+1</sup> = α<sup>k</sup> + Δα. Линеаризуем f по Тейлору: f(x<sub>i</sub>,α) ≈ f(x<sub>i</sub>,α<sup>k</sup>) + Σ J<sub>ij</sub>Δα<sub>j</sub>. Тогда r ≈ Δy − JΔα, Δy<sub>i</sub> = y<sub>i</sub> − f(x<sub>i</sub>,α<sup>k</sup>). Минимизация ‖Δy − JΔα‖² даёт <b>JᵀJ Δα = JᵀΔy</b>. J пересчитывается на каждой итерации (можно численно конечными разностями).</p>
+<p><b>Проблемы:</b> нужен хороший начальный α⁰, возможны локальные минимумы и расходимость.</p>`,
+gd:`<p><b>Gradient descent</b> — итерационный метод минимизации дифференцируемой f: <b>x<sub>k+1</sub> = x<sub>k</sub> − t·∇f(x<sub>k</sub>)</b>, t &gt; 0 — длина шага.</p>
+<p><b>Вывод:</b> f(x+d) ≈ f(x) + ∇fᵀd; по неравенству Коши–Буняковского ∇fᵀd ≥ −‖∇f‖‖d‖ с равенством при d = −∇f/‖∇f‖, значит антиградиент — направление наискорейшего убывания.</p>
+<p><b>Сходимость:</b> для квадратичной f ошибка умножается на (I − tA), сходимость при 0 &lt; t &lt; 2/λ<sub>max</sub>; скорость линейная с множителем (κ−1)/(κ+1), κ = λ<sub>max</sub>/λ<sub>min</sub>. Для L-гладкой выпуклой f при t = 1/L: f(x<sub>k</sub>) − f* ≤ L‖x<sub>0</sub>−x*‖²/(2k) (сублинейно).</p>
+<p><b>Улучшения:</b> line search (Wolfe), heavy ball, conjugate gradient, метод Ньютона.</p>`,
+newton:`<p><b>Newton method.</b> Метод второго порядка. В точке x<sub>k</sub> функцию заменяют квадратичной моделью m(d) = f + ∇fᵀd + ½dᵀHd. При H ≻ 0 минимум модели: ∇m = ∇f + Hd = 0 ⇒ <b>d = −H⁻¹∇f</b> (ньютоновское направление), x<sub>k+1</sub> = x<sub>k</sub> + αd, «естественный» шаг α = 1. Это направление убывания: ∇fᵀd = −∇fᵀH⁻¹∇f &lt; 0.</p>
+<p><b>Сходимость:</b> если Гессиан липшицев (L), H(x*) ⪰ mI и ‖x₀−x*‖ ≤ m/(2L), то ‖x<sub>k+1</sub>−x*‖ ≤ (L/m)‖x<sub>k</sub>−x*‖² — квадратичная (локальная); глобально нужен line search с условиями Вольфе.</p>
+<p><b>Плюсы/минусы:</b> быстро вблизи решения (для квадратичных функций за 1 шаг), но нужен Гессиан (дорого, O(n³)), требуется H ≻ 0.</p>
+<p><b>1D:</b> x<sub>k+1</sub> = x<sub>k</sub> − f′/f″; пример √2: 1 → 1.5 → 1.4167 → 1.41422.</p>`,
+pca:`<p><b>PCA</b> — линейное снижение размерности: новые ортогональные оси (главные компоненты), упорядоченные по убыванию объяснённой дисперсии.</p>
+<p><b>Алгоритм:</b> центрировать (и при необходимости стандартизировать) данные; C = XᵀX/(N−1); найти собственные пары Cv = λv; упорядочить λ<sub>1</sub> ≥ λ<sub>2</sub> ≥ …; scores T = XV; оставить первые k компонент (по доле Σλ<sub>i</sub>/Σλ или scree plot).</p>
+<p><b>Вывод:</b> дисперсия проекции на единичный w равна wᵀCw. Максимизируем при wᵀw = 1 (Лагранж): Cw = λw, значение дисперсии = λ ⇒ PC1 — собственный вектор с наибольшим λ; следующие ортогональны. Σλ = tr(C) — полная дисперсия. Эквивалентно SVD: X = UΣVᵀ, λ = σ²/(N−1).</p>
+<p><b>Пример:</b> точки (1,2),(2,3),(3,5),(4,6): λ = 4.978 и 0.022, PC1 объясняет 99.5%.</p>`,
+clu:`<p><b>Cluster analysis</b> — разбиение объектов на группы (кластеры) без заранее заданных меток так, чтобы внутри кластера объекты похожи, между кластерами различны. Основа — мера сходства/расстояние (евклидово, манхэттенское, косинусное…).</p>
+<p><b>Методы:</b> <b>k-means</b> (число k задано; назначение к ближайшему центру, пересчёт центров как среднего; минимизирует Σ‖x−c<sub>j</sub>‖², сходится к локальному минимуму; варианты k-medians, k-medoids); <b>AHC</b> (иерархия слияний, linkage single/complete/average/Ward, дендрограмма); <b>DBSCAN</b> (ε, minPts; плотностные кластеры любой формы + шум); <b>fuzzy c-means</b> (степени принадлежности).</p>
+<p><b>Качество:</b> silhouette s = (b−a)/max(a,b), elbow по SSE.</p>
+<p><b>Пример:</b> точки 1,2,4,9,10,12, k = 2: центры 2.33 и 10.33, SSE = 9.33.</p>`,
+surv:`<p><b>Survival analysis</b> — анализ времени до события T (смерть, поломка, отток) с учётом <b>цензурирования</b> (событие к концу наблюдения не произошло, известно лишь T &gt; t). (Не из присланных слайдов, стандартная теория.)</p>
+<p><b>Функции:</b> S(t) = P(T &gt; t) (выживание, S(0)=1, не возрастает); F = 1 − S; f = −S′; hazard h(t) = f/S; H(t) = ∫h; S = e<sup>−H</sup> (вывод: h = −(ln S)′).</p>
+<p><b>Каплан–Майер:</b> Ŝ(t) = Π<sub>t<sub>i</sub>≤t</sub>(1 − d<sub>i</sub>/n<sub>i</sub>).</p>
+<p><b>Какие линии:</b> ступенчатая невозрастающая кривая KM (скачки вниз в моменты событий, тики для цензурированных), доверительные границы (Гринвуд), медиана на уровне S = 0.5, кривые кумулятивного риска (Nelson–Aalen) и функции риска; несколько кривых для групп, сравнение log-rank тестом; модель Кокса h(t|x) = h₀(t)e<sup>βx</sup>.</p>`
+};
+
+const TOPICS = [
+{id:'reg', title:'1. Линейная регрессия: α и β', goal:'Прямая по точкам: что такое остаток, α, β, и как их вывести.', cards:[
+ {k:'story', h:'Что мы вообще делаем', b:`<p>Есть облако точек (x<sub>i</sub>, y<sub>i</sub>): например, x — часы учёбы, y — оценка. Мы хотим <b>одну прямую</b>, которая проходит как можно ближе ко всем точкам, чтобы по новому x предсказывать y.</p>
+ <p>Прямая в лекции профессора записана как <b>y = αx + β</b>. Запомни именно так: <b>α — наклон (slope)</b>, <b>β — сдвиг (intercept, значение при x = 0)</b>. (В других учебниках часто наоборот, β<sub>1</sub> — наклон. На экзамене пиши как на лекции и сразу подпиши, что есть что.)</p>
+ <p><b>Остаток (residual)</b> точки: r<sub>i</sub> = y<sub>i</sub> − (αx<sub>i</sub> + β), то есть настоящий y минус предсказание. Это <b>вертикальное</b> расстояние до прямой, а не перпендикуляр (на лекции это отдельно подчёркнуто).</p>`},
+ {k:'num', h:'Числа: 5 точек', b:`<p>x = 1, 2, 3, 4, 5; y = 2, 4, 5, 4, 5. Средние: x̄ = 3, ȳ = 4.</p>
+ <table class="tbl"><tr><th>x</th><th>y</th><th>x−x̄</th><th>y−ȳ</th><th>(x−x̄)(y−ȳ)</th><th>(x−x̄)²</th></tr>
+ <tr><td>1</td><td>2</td><td>−2</td><td>−2</td><td>4</td><td>4</td></tr><tr><td>2</td><td>4</td><td>−1</td><td>0</td><td>0</td><td>1</td></tr><tr><td>3</td><td>5</td><td>0</td><td>1</td><td>0</td><td>0</td></tr><tr><td>4</td><td>4</td><td>1</td><td>0</td><td>0</td><td>1</td></tr><tr><td>5</td><td>5</td><td>2</td><td>1</td><td>2</td><td>4</td></tr><tr><th colspan="4">сумма</th><th>6</th><th>10</th></tr></table>
+ <p><b>α = 6/10 = 0.6</b> (на каждый лишний час +0.6 балла). <b>β = ȳ − αx̄ = 4 − 0.6·3 = 2.2</b>. Прямая: y = 0.6x + 2.2. Прогнозы 2.8; 3.4; 4.0; 4.6; 5.2, остатки −0.8; 0.6; 1.0; −0.6; −0.2 (их сумма равна 0, это не случайность, см. вывод).</p>`},
+ {k:'formula', h:'Формулы по буквам', b:`<table class="sym"><tr><td>α = S<sub>xy</sub> / S<sub>xx</sub></td><td>наклон = (сумма произведений отклонений) / (сумма квадратов отклонений x)</td></tr>
+ <tr><td>S<sub>xy</sub> = Σ(x<sub>i</sub>−x̄)(y<sub>i</sub>−ȳ)</td><td>«как x и y отклоняются вместе»; делённая на N−1 это ковариация cov(x,y)</td></tr>
+ <tr><td>S<sub>xx</sub> = Σ(x<sub>i</sub>−x̄)²</td><td>делённая на N−1 это дисперсия var(x)</td></tr>
+ <tr><td>β = ȳ − αx̄</td><td>прямая всегда проходит через точку средних (x̄, ȳ)</td></tr>
+ <tr><td>r = S<sub>xy</sub>/√(S<sub>xx</sub>S<sub>yy</sub>)</td><td>коэффициент корреляции, от −1 до 1; α = r·s<sub>y</sub>/s<sub>x</sub></td></tr></table>
+ <p>В примере r = 6/√(10·6) = 0.775. В коде лекции: <code>alpha = cov(x,y)/cov(x,x); beta = mean(y) − alpha*mean(x)</code>.</p>`},
+ {k:'proof', h:'Вывод формул α и β (метод наименьших квадратов)', b:`<p><b>Цель:</b> минимизировать сумму квадратов остатков E(α,β) = Σ(y<sub>i</sub> − αx<sub>i</sub> − β)². Квадрат нужен, чтобы плюсы и минусы не гасили друг друга и чтобы функция была гладкой.</p>
+ <ol class="big">
+ <li><b>Производная по β</b> равна нулю: ∂E/∂β = −2Σ(y<sub>i</sub> − αx<sub>i</sub> − β) = 0. Раскрываем: Σy<sub>i</sub> = αΣx<sub>i</sub> + Nβ. Делим на N: <b>ȳ = αx̄ + β</b>, откуда β = ȳ − αx̄. (Заодно: сумма остатков равна 0.)</li>
+ <li><b>Производная по α</b>: ∂E/∂α = −2Σ(y<sub>i</sub> − αx<sub>i</sub> − β)x<sub>i</sub> = 0.</li>
+ <li>Подставляем β = ȳ − αx̄: Σ[(y<sub>i</sub>−ȳ) − α(x<sub>i</sub>−x̄)]·x<sub>i</sub> = 0.</li>
+ <li>Трюк: Σ(y<sub>i</sub>−ȳ)x<sub>i</sub> = Σ(y<sub>i</sub>−ȳ)(x<sub>i</sub>−x̄) (потому что Σ(y<sub>i</sub>−ȳ)·x̄ = 0), и так же Σ(x<sub>i</sub>−x̄)x<sub>i</sub> = Σ(x<sub>i</sub>−x̄)². Получаем S<sub>xy</sub> − αS<sub>xx</sub> = 0, то есть <b>α = S<sub>xy</sub>/S<sub>xx</sub></b>.</li>
+ <li><b>Это именно минимум:</b> матрица вторых производных [[2Σx<sub>i</sub>², 2Σx<sub>i</sub>],[2Σx<sub>i</sub>, 2N]] имеет определитель 4(NΣx<sub>i</sub>² − (Σx<sub>i</sub>)²) = 4N·S<sub>xx</sub> &gt; 0, если не все x одинаковы, и 2N &gt; 0. Значит положительно определена: решение единственно и является минимумом.</li></ol>
+ <p>Два уравнения из шагов 1–2 называют <b>нормальными уравнениями</b>.</p>`},
+ {k:'quiz', q:'В записи профессора y = αx + β что такое β?', o:['наклон прямой','значение y при x = 0 (свободный член)','коэффициент корреляции','остаток'], a:1, why:'В лекции α это наклон, β это свободный член (intercept). Прямая проходит через (x̄, ȳ), поэтому β = ȳ − αx̄.'},
+ {k:'quiz', q:'Почему сумма остатков в МНК с свободным членом равна нулю?', o:['так получилось в примере','из условия ∂E/∂β = 0','из условия ∂E/∂α = 0','потому что r = 1'], a:1, why:'∂E/∂β = −2Σr<sub>i</sub> = 0, то есть Σr<sub>i</sub> = 0.'},
+ {k:'quiz', q:'x̄ = 3, ȳ = 4, α = 0.6. Чему равен β?', o:['2.2','1.8','0.6','4'], a:0, why:'β = ȳ − αx̄ = 4 − 0.6·3 = 2.2.'},
+ {k:'exam', h:'Как отвечать «Linear regression / Alpha, Beta»', b:`<ol class="big"><li>Модель y = αx + β + r, α наклон, β свободный член, r ошибка.</li><li>Остаток r<sub>i</sub> = y<sub>i</sub> − αx<sub>i</sub> − β, вертикальное расстояние.</li><li>Критерий: min E(α,β) = Σr<sub>i</sub>².</li><li>Нормальные уравнения (производные = 0) и их решение: α = cov(x,y)/var(x), β = ȳ − αx̄.</li><li>Проверка на минимум (Гессиан положительно определён).</li><li>Мини-пример с числами и r.</li></ol>`}
+]},
+{id:'err', title:'2. SSR, MSE, R²', goal:'Ошибки модели: сумма квадратов остатков, MSE, качество подгонки.', cards:[
+ {k:'story', h:'Осторожно: SSR у профессора', b:`<p>В лекции <b>SSR = Sum of Squared Residuals</b> = сумма квадратов остатков = E(α) = Σ(y<sub>i</sub> − f(x<sub>i</sub>, α))². Её же называют SSE (Sum of Squared Errors, лекция употребляет оба названия).</p>
+ <p>Во многих других учебниках SSR значит наоборот «сумма квадратов, объяснённая регрессией». Поэтому на экзамене <b>пиши формулой</b>: «SSR = Σr<sub>i</sub>²».</p>
+ <p><b>MSE</b> (Mean Squared Error) — это та же сумма, но усреднённая: MSE = SSR / N. Это «средний квадрат ошибки», удобно сравнивать между наборами разного размера.</p>`},
+ {k:'num', h:'Числа из прошлой темы', b:`<p>Остатки: −0.8; 0.6; 1.0; −0.6; −0.2.</p><p><b>SSR</b> = 0.64 + 0.36 + 1 + 0.36 + 0.04 = <b>2.4</b>. <b>MSE</b> = 2.4/5 = <b>0.48</b>. <b>RMSE</b> = √0.48 ≈ 0.693 (в тех же единицах, что y).</p>
+ <p><b>Полная вариация</b> SST = Σ(y<sub>i</sub> − ȳ)² = 4+0+1+0+1 = 6. <b>R² = 1 − SSR/SST = 1 − 2.4/6 = 0.6</b>: модель объясняет 60% разброса y (и r² = 0.775² = 0.6, это совпадение не случайно в простой регрессии).</p>`},
+ {k:'formula', h:'Формулы по буквам', b:`<table class="sym"><tr><td>SSR = Σr<sub>i</sub>²</td><td>сумма квадратов остатков (то, что МНК минимизирует)</td></tr><tr><td>MSE = SSR/N</td><td>средний квадрат ошибки; иногда делят на N−p (p параметров), чтобы оценка была несмещённой</td></tr><tr><td>RMSE = √MSE</td><td>типичная ошибка в единицах y</td></tr><tr><td>SST = Σ(y<sub>i</sub>−ȳ)²</td><td>полный разброс y вокруг среднего (ошибка «модели-константы» ȳ)</td></tr><tr><td>R² = 1 − SSR/SST</td><td>доля объяснённого разброса: 1 идеально, 0 как среднее</td></tr><tr><td>R²<sub>adj</sub> = 1 − (1−R²)(N−1)/(N−p−1)</td><td>R² со штрафом за лишние переменные (p предикторов)</td></tr></table>`},
+ {k:'proof', h:'Вывод: SST = SSR + (объяснённая часть)', b:`<p>Пусть ŷ<sub>i</sub> — прогноз, r<sub>i</sub> = y<sub>i</sub> − ŷ<sub>i</sub>. Тогда y<sub>i</sub> − ȳ = (y<sub>i</sub> − ŷ<sub>i</sub>) + (ŷ<sub>i</sub> − ȳ). Возводим в квадрат и суммируем:</p>
+ <p>Σ(y<sub>i</sub>−ȳ)² = Σr<sub>i</sub>² + Σ(ŷ<sub>i</sub>−ȳ)² + 2Σr<sub>i</sub>(ŷ<sub>i</sub>−ȳ).</p>
+ <p>Смешанный член равен нулю: ŷ<sub>i</sub> − ȳ = α(x<sub>i</sub> − x̄), а из нормальных уравнений Σr<sub>i</sub> = 0 и Σr<sub>i</sub>x<sub>i</sub> = 0 (остатки ортогональны столбцам 1 и x). Значит Σr<sub>i</sub>(ŷ<sub>i</sub>−ȳ) = αΣr<sub>i</sub>x<sub>i</sub> − αx̄Σr<sub>i</sub> = 0.</p>
+ <p><b>Итог:</b> SST = SSR + SS<sub>объяснённая</sub>, поэтому R² = 1 − SSR/SST = SS<sub>объяснённая</sub>/SST ∈ [0,1].</p>
+ <p><b>Почему SSR не годится для выбора модели:</b> при добавлении переменных SSR только падает (R² растёт) даже на мусоре, поэтому нужны adj R² или проверка на новых данных (тема 5).</p>`},
+ {k:'quiz', q:'SSR = 2.4, N = 5. Чему равен MSE?', o:['0.48','12','2.4','1.55'], a:0, why:'MSE = SSR/N = 2.4/5 = 0.48.'},
+ {k:'quiz', q:'SST = 6, SSR = 2.4. Чему равен R²?', o:['0.4','0.6','2.5','3.6'], a:1, why:'R² = 1 − 2.4/6 = 0.6.'},
+ {k:'exam', h:'Ответ «Sum of squared residuals / MSE»', b:`<ol class="big"><li>Остаток r<sub>i</sub> = y<sub>i</sub> − f(x<sub>i</sub>,α).</li><li>SSR = Σr<sub>i</sub>², это функция E(α), которую минимизирует МНК.</li><li>MSE = SSR/N (RMSE = √MSE).</li><li>Связь с R² и SST.</li><li>Оценка ошибки на тестовых данных (cross-validation) честнее, чем на обучающих.</li></ol>`}
+]},
+{id:'ols', title:'3. OLS в матричной форме', goal:'Нормальные уравнения XᵀXα = Xᵀy и их вывод. Множественная регрессия.', cards:[
+ {k:'story', h:'Те же точки как система уравнений', b:`<p>Каждая точка даёт уравнение: αx<sub>i</sub> + β ≈ y<sub>i</sub>. Всего N уравнений на 2 неизвестных: система <b>переопределена</b>, точного решения нет. OLS (Ordinary Least Squares) находит решение, дающее наименьшую сумму квадратов остатков.</p>
+ <p>Записываем все уравнения разом: <b>X a ≈ y</b>, где X — матрица N×p (в первой колонке x<sub>i</sub>, во второй единицы), a = (α, β)<sup>T</sup>, y — вектор наблюдений. Для множественной регрессии просто больше колонок (по колонке на переменную).</p>`},
+ {k:'num', h:'Тот же пример в матрицах', b:`<p>Столбцы X: x и единицы; N = 5. Считаем:</p><pre class="code">XᵀX = [ Σx²  Σx ]   = [ 55  15 ]      Xᵀy = [ Σxy ] = [ 66 ]
+      [ Σx    N ]     [ 15   5 ]            [ Σy  ]   [ 20 ]</pre>
+ <p>Σxy = 2+8+15+16+25 = 66. Решаем 55α + 15β = 66 и 15α + 5β = 20. Из второго β = 4 − 3α. В первое: 55α + 60 − 45α = 66, значит <b>α = 0.6, β = 2.2</b>. Тот же ответ.</p>`},
+ {k:'formula', h:'Формулы по буквам', b:`<table class="sym"><tr><td>E(a) = ‖y − Xa‖²</td><td>сумма квадратов остатков в векторной записи</td></tr><tr><td>XᵀX a = Xᵀy</td><td>нормальные уравнения</td></tr><tr><td>a = (XᵀX)⁻¹Xᵀy</td><td>решение; существует, если колонки X линейно независимы (rank X = p)</td></tr><tr><td>ŷ = X a = H y, H = X(XᵀX)⁻¹Xᵀ</td><td>прогнозы; H проектирует y на пространство колонок X</td></tr></table>`},
+ {k:'proof', h:'Вывод нормальных уравнений', b:`<ol class="big">
+ <li>E(a) = (y − Xa)ᵀ(y − Xa) = yᵀy − 2aᵀXᵀy + aᵀXᵀX a.</li>
+ <li>Градиент (правила: ∇(aᵀb) = b, ∇(aᵀMa) = 2Ma для симметричной M): <b>∇E = −2Xᵀy + 2XᵀX a</b>.</li>
+ <li>Приравниваем к нулю: <b>XᵀX a = Xᵀy</b>. Это и есть p «нормальных» уравнений.</li>
+ <li><b>Минимум и единственность:</b> матрица Гессе ∇²E = 2XᵀX. Для любого вектора v: vᵀXᵀXv = ‖Xv‖² ≥ 0, а при независимых колонках Xv ≠ 0, значит XᵀX положительно определена. Тогда XᵀX обратима, и решение a = (XᵀX)⁻¹Xᵀy единственное и E выпукла, т.е. это глобальный минимум (лекция: «closed-form solution unique, if N ≥ p»).</li>
+ <li><b>Геометрия:</b> нормальные уравнения означают Xᵀ(y − Xa) = 0, то есть <b>вектор остатков ортогонален каждому столбцу X</b>. ŷ это ортогональная проекция y на пространство колонок. Поэтому, если есть колонка единиц, Σr<sub>i</sub> = 0.</li></ol>`},
+ {k:'quiz', q:'Что значит XᵀX a = Xᵀy геометрически?', o:['остатки ортогональны столбцам X','остатки равны нулю','a ортогонален y','X квадратная'], a:0, why:'Xᵀ(y − Xa) = 0: вектор остатков перпендикулярен всем столбцам X.'},
+ {k:'quiz', q:'Когда XᵀX необратима?', o:['когда столбцы X линейно зависимы (мультиколлинеарность)','когда N большое','когда y константа','никогда'], a:0, why:'Нужен rank X = p; иначе решение не единственно.'},
+ {k:'exam', h:'Ответ «OLS»', b:`<ol class="big"><li>Модель y = Xa + r, критерий min ‖y − Xa‖².</li><li>Градиент и нормальные уравнения XᵀXa = Xᵀy.</li><li>Решение a = (XᵀX)⁻¹Xᵀy и условие rank X = p.</li><li>Минимум: Гессиан 2XᵀX положительно определён.</li><li>Геометрический смысл (проекция) и мини-пример 2×2.</li></ol>`}
+]},
+{id:'poly', title:'4. Полиномиальная регрессия', goal:'Как считать: та же линейная регрессия, но с колонками 1, x, x², ...', cards:[
+ {k:'story', h:'Кривая, но «линейная по параметрам»', b:`<p>Модель: y = α<sub>0</sub> + α<sub>1</sub>x + α<sub>2</sub>x² + … + α<sub>p</sub>x<sup>p</sup>. Кривая, но неизвестные α<sub>j</sub> входят <b>линейно</b>. Поэтому всё как в OLS: просто новые «признаки» x², x³ становятся новыми колонками матрицы. Лекция прямо подчёркивает: «polynomial regression is a special case of multiple linear regression».</p>`},
+ {k:'num', h:'Числа: параболу через 4 точки', b:`<p>Точки: (−1, 2), (0, 1), (1, 2), (2, 5), степень p = 2. Колонки: 1, x, x².</p>
+ <pre class="code">X = [1 −1 1]      y = [2]
+    [1  0 0]          [1]
+    [1  1 1]          [2]
+    [1  2 4]          [5]
+
+XᵀX = [ 4  2  6 ]    Xᵀy = [10]
+      [ 2  6  8 ]          [10]
+      [ 6  8 18 ]          [24]</pre>
+ <p>Решаем XᵀXα = Xᵀy: получаем <b>α = (1, 0, 1)</b>, то есть y = 1 + 0·x + 1·x² = x² + 1. Остатки нулевые (ровно эти точки лежат на параболе). Для сравнения: прямая даёт y = 2 + x и SSR = 4. Парабола подходит лучше.</p>`},
+ {k:'formula', h:'Матрица Вандермонда и шаги', b:`<table class="sym"><tr><td>X<sub>ij</sub> = x<sub>i</sub><sup>j</sup>, j = 0..p</td><td>матрица Вандермонда, размер N×(p+1)</td></tr><tr><td>α = (XᵀX)⁻¹Xᵀy</td><td>те же нормальные уравнения</td></tr><tr><td>p ≤ N − 1</td><td>при p = N−1 кривая проходит через все точки (интерполяция, SSR = 0)</td></tr></table>
+ <p><b>Алгоритм на экзамене:</b> 1) выбрать степень p; 2) построить X со столбцами 1, x, …, x<sup>p</sup>; 3) составить XᵀX и Xᵀy; 4) решить систему; 5) посчитать SSR и сравнить степени через cross-validation.</p>`},
+ {k:'proof', h:'Почему формулы те же и почему нельзя брать p слишком большим', b:`<p><b>Те же:</b> f(x,α) = Σα<sub>j</sub>x<sup>j</sup> линейна по α, поэтому ∂f/∂α<sub>j</sub> = x<sup>j</sup> не зависит от α, и условия ∂E/∂α<sub>j</sub> = −2Σ(y<sub>i</sub> − f(x<sub>i</sub>))x<sub>i</sub><sup>j</sup> = 0 дают ровно XᵀXα = Xᵀy (см. тему 3).</p>
+ <p><b>Переобучение:</b> при N различных точках система с p = N−1 имеет единственное решение (определитель Вандермонда Π(x<sub>j</sub>−x<sub>i</sub>) ≠ 0), кривая проходит через все точки и SSR = 0, но между ними она бешено колеблется и плохо предсказывает новые данные. Как выбрать степень: по ошибке на <b>тестовых</b> данных (holdout, k-fold, тема 5) или по adjusted R², а не по SSR на обучающих.</p>`},
+ {k:'quiz', q:'Почему полиномиальную регрессию считают линейной?', o:['линейна по параметрам α','линейна по x','потому что p = 1','потому что график прямой'], a:0, why:'Параметры входят линейно, поэтому работают нормальные уравнения.'},
+ {k:'quiz', q:'У вас N = 9 различных точек. При какой степени полином пройдёт через все точки?', o:['p = 2','p = 4','p = 8','p = 9'], a:2, why:'p = N − 1 = 8: девять коэффициентов на девять точек.'},
+ {k:'exam', h:'Ответ «How to calculate polynomial regression?»', b:`<ol class="big"><li>Модель и почему она линейна по параметрам.</li><li>Матрица Вандермонда X.</li><li>Нормальные уравнения и решение α = (XᵀX)⁻¹Xᵀy.</li><li>Мини-пример (как выше).</li><li>Выбор степени: переобучение, cross-validation.</li></ol>`}
+]},
+{id:'res', title:'5. Resampling: cross-validation и bootstrap', goal:'Как честно проверить модель на новых данных.', cards:[
+ {k:'story', h:'Зачем', b:`<p>Модель, подогнанная под данные, на этих же данных всегда выглядит хорошо (высокий R², малый SSR). Но нужна способность <b>предсказывать новые</b> данные. Поэтому часть данных прячем: учим на одной части (training set), проверяем на другой (testing set). Повторное разбиение и усреднение называют <b>resampling</b>.</p>
+ <p>(Если в списке вопросов было «Resembling», скорее всего имелось в виду resampling, и это cross-validation из лекции.)</p>`},
+ {k:'formula', h:'Методы из лекции', b:`<table class="sym"><tr><td>Holdout</td><td>один раз делим на train/test (часто 10–33% в test). Быстро, но результат зависит от случайного разбиения.</td></tr>
+ <tr><td>Leave-p-out (LpO)</td><td>в test по p точек, перебираем ВСЕ способы: C(N,p) моделей. При N = 100, p = 30 это ≈ 2.9·10²⁵, нереально.</td></tr>
+ <tr><td>Leave-one-out (LOO)</td><td>p = 1, всего N моделей. Дорого при большом N.</td></tr>
+ <tr><td>k-fold</td><td>делим на k равных частей, каждая по разу служит тестом. Всего k моделей; k = N даёт LOO; 2-fold: train d1/test d2 и наоборот.</td></tr></table>
+ <p>Итоговая оценка = среднее по всем тестовым ошибкам: CV = (1/k)·Σ MSE<sub>j</sub>.</p>`},
+ {k:'num', h:'Числа', b:`<p>N = 8 точек. <b>LOO:</b> 8 моделей; каждая учится на 7 точках, проверяется на 1. <b>4-fold:</b> 4 части по 2 точки, 4 модели (каждая учится на 6, тестируется на 2); так в среднем быстрее и стабильнее, чем один holdout.</p>
+ <p>Пример выбора степени: для полиномов p = 1..5 считаем 4-fold CV-ошибку, например 3.2; 0.9; 0.8; 2.5; 9.1. Берём p = 3: минимум тестовой ошибки (дальше начинается переобучение: на обучении ошибка падала бы всё время, а на тесте растёт).</p>`},
+ {k:'proof', h:'Вывод: bootstrap берёт ≈ 63.2% разных точек (вне лекции)', b:`<p><b>Bootstrap</b> (не из слайдов, общеизвестный метод): из N точек N раз берём точку <b>с возвращением</b>, получаем новую выборку того же размера, считаем статистику, повторяем много раз и смотрим на разброс (оценка погрешности).</p>
+ <p>Вероятность, что конкретная точка НЕ попала в выборку: (1 − 1/N)<sup>N</sup> → e<sup>−1</sup> ≈ 0.368 при N → ∞ (так как (1 − 1/N)<sup>N</sup> → e<sup>−1</sup>). Значит попала с вероятностью ≈ 0.632: в среднем 63.2% разных точек, остальные ≈ 36.8% («out-of-bag») используются как тест.</p>`},
+ {k:'quiz', q:'Что делает k-fold cross-validation при k = N?', o:['превращается в leave-one-out','превращается в holdout','ничего','считает C(N,2) моделей'], a:0, why:'Лекция: for k = N, k-fold CV equals leave-one-out.'},
+ {k:'quiz', q:'Почему LpO CV почти не используют?', o:['число разбиений C(N,p) огромное','она неточная','она не для регрессии','она всегда дороже bootstrap в 2 раза'], a:0, why:'Пример лекции: C(100,30) ≈ 2.9·10²⁵ повторов.'},
+ {k:'exam', h:'Ответ «Resampling / Cross-validation»', b:`<ol class="big"><li>Проблема: переобучение, оценка на обучающих данных завышена.</li><li>Идея: train/test, повтор и усреднение.</li><li>Методы: holdout, LpO, LOO, k-fold (плюсы и минусы).</li><li>Применение: выбор степени полинома, числа признаков.</li><li>Bootstrap кратко: выборка с возвращением, 63.2%.</li></ol>`}
+]},
+{id:'sel', title:'6. Forward / backward selection', goal:'Как выбирать признаки в регрессии.', ext:true, cards:[
+ {k:'story', h:'Тема вне слайдов лекций', b:`<p class="warn"><b>Важно:</b> в присланных слайдах профессора этой темы нет. Ниже общепринятое описание (стандартный курс статистики). Если Davide/профессор вводили свои обозначения, ориентируйся на них.</p>
+ <p>Есть p возможных признаков. Перебрать все подмножества (2<sup>p</sup> моделей) нельзя при большом p, поэтому используют жадные пошаговые методы:</p>
+ <ul class="big"><li><b>Forward selection:</b> начинаем с пустой модели (только свободный член). На каждом шаге добавляем тот признак, который больше всего улучшает критерий. Останавливаемся, когда добавление больше не помогает.</li><li><b>Backward elimination:</b> начинаем со всех признаков, на каждом шаге убираем самый бесполезный. Останавливаемся, когда удаление ухудшает критерий.</li><li><b>Stepwise:</b> комбинация (можно и добавлять, и убирать).</li></ul>`},
+ {k:'formula', h:'Критерии: чем измеряем «лучше»', b:`<table class="sym"><tr><td>adj R²</td><td>1 − (1−R²)(N−1)/(N−p−1): растёт, только если признак помогает больше, чем штраф</td></tr><tr><td>AIC</td><td>N·ln(SSR/N) + 2k: штраф 2 за каждый параметр (k параметров), меньше лучше</td></tr><tr><td>BIC</td><td>N·ln(SSR/N) + k·ln N: штраф сильнее</td></tr><tr><td>CV-ошибка</td><td>тестовая MSE из k-fold</td></tr><tr><td>F-тест / p-value</td><td>значим ли добавляемый признак</td></tr></table>
+ <p>Нельзя выбирать по обычному SSR или R²: они всегда улучшаются при добавлении признаков (см. тему 2).</p>`},
+ {k:'num', h:'Пример на условных числах', b:`<p>Признаки x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>. Условные значения SSR (числа придуманы для показа логики): пустая модель 100; {x<sub>1</sub>} 40; {x<sub>2</sub>} 70; {x<sub>3</sub>} 90.</p>
+ <p><b>Forward, шаг 1:</b> лучший одиночный x<sub>1</sub> (SSR 40), берём. <b>Шаг 2:</b> пробуем {x<sub>1</sub>,x<sub>2</sub>} = 38 и {x<sub>1</sub>,x<sub>3</sub>} = 39.5. Улучшение с 40 до 38 малое: по AIC/CV это может не окупить лишний параметр, тогда останавливаемся на {x<sub>1</sub>}.</p>
+ <p><b>Backward:</b> стартуем с {x<sub>1</sub>,x<sub>2</sub>,x<sub>3</sub>}, убираем признак, чьё удаление меньше всего ухудшает критерий, и так далее.</p>
+ <p>Число всех моделей для p = 3: 2³ = 8; для p = 20 уже больше миллиона, поэтому жадный поиск.</p>`},
+ {k:'proof', h:'Почему жадный поиск не гарантирует лучшую модель', b:`<p>Forward добавляет признаки по одному и не пересматривает прошлые решения: два признака могут быть полезны только вместе (по отдельности каждый слабый), и forward их пропустит. Backward стартует с полной модели, поэтому такие пары находит, но требует N &gt; p и ломается при мультиколлинеарности (XᵀX необратима). Чтобы не обмануть себя, финальную модель проверяют на отдельных данных (cross-validation).</p>`},
+ {k:'quiz', q:'С чего начинается forward selection?', o:['с пустой модели','со всех признаков','со случайных признаков','с самого значимого'], a:0, why:'Forward: пустая модель, затем добавляем по одному. Backward наоборот.'},
+ {k:'quiz', q:'Можно ли выбирать признаки по минимуму SSR на обучающих данных?', o:['нет, SSR падает при добавлении любых признаков','да, это лучший критерий','только в backward','только если N мало'], a:0, why:'Поэтому нужны adj R², AIC/BIC или CV-ошибка.'},
+ {k:'exam', h:'Ответ «Forward / backward selection»', b:`<ol class="big"><li>Зачем: много признаков, 2<sup>p</sup> подмножеств слишком много.</li><li>Forward: пусто → добавляем лучший; Backward: полная → убираем худший.</li><li>Критерий остановки: adj R², AIC/BIC, CV, F-тест.</li><li>Минусы: жадность, мультиколлинеарность, переобучение при выборе.</li></ol>`}
+]},
+{id:'jac', title:'7. Якобиан и нелинейный МНК (Gauss–Newton)', goal:'Что такое Якобиан и как подгонять модель, нелинейную по параметрам.', cards:[
+ {k:'story', h:'Когда линейные формулы не работают', b:`<p>Модель y = f(x, α), где α входит нелинейно, например y = e<sup>αx</sup>. Нормальные уравнения нелинейны по α и закрытого решения обычно нет. Идея: <b>на каждом шаге заменять функцию её линейным приближением</b> (первым членом ряда Тейлора) и решать уже линейную задачу МНК. Повторять, пока не сойдётся.</p>
+ <p><b>Якобиан</b> — это матрица всех первых частных производных. Для подгонки: J<sub>ij</sub> = ∂f(x<sub>i</sub>, α)/∂α<sub>j</sub> (N×p): строка на каждую точку, столбец на каждый параметр. Для вектор-функции F: ℝⁿ→ℝᵐ: J<sub>ij</sub> = ∂F<sub>i</sub>/∂x<sub>j</sub>.</p>`},
+ {k:'num', h:'Числа: Якобиан вектор-функции', b:`<p>F(x,y) = (x²y, 5x + sin y). Тогда</p><pre class="code">J = [ ∂F₁/∂x  ∂F₁/∂y ]  =  [ 2xy   x² ]
+    [ ∂F₂/∂x  ∂F₂/∂y ]     [  5   cos y ]
+
+в точке (1, 0):  J = [ 0  1 ]
+                     [ 5  1 ]</pre><p>Якобиан даёт «линейную копию» функции рядом с точкой: F(p+d) ≈ F(p) + J·d.</p>`},
+ {k:'proof', h:'Вывод шага Gauss–Newton (как на лекции)', b:`<ol class="big">
+ <li>Остатки r<sub>i</sub> = y<sub>i</sub> − f(x<sub>i</sub>, α). Хотим минимизировать E(α) = Σr<sub>i</sub>².</li>
+ <li>Пусть текущее приближение α<sup>k</sup>. Линеаризуем: f(x<sub>i</sub>, α) ≈ f(x<sub>i</sub>, α<sup>k</sup>) + Σ<sub>j</sub> J<sub>ij</sub> Δα<sub>j</sub>, где Δα = α − α<sup>k</sup>, J<sub>ij</sub> = ∂f(x<sub>i</sub>, α<sup>k</sup>)/∂α<sub>j</sub>.</li>
+ <li>Обозначим Δy<sub>i</sub> = y<sub>i</sub> − f(x<sub>i</sub>, α<sup>k</sup>) (текущий остаток). Тогда r<sub>i</sub> ≈ Δy<sub>i</sub> − Σ<sub>j</sub> J<sub>ij</sub>Δα<sub>j</sub>, то есть r ≈ Δy − JΔα.</li>
+ <li>Это <b>линейная</b> задача МНК: min ‖Δy − JΔα‖². По теме 3 (X→J, y→Δy) нормальные уравнения: <b>JᵀJ Δα = JᵀΔy</b>.</li>
+ <li>Решаем Δα = (JᵀJ)⁻¹JᵀΔy и обновляем <b>α<sup>k+1</sup> = α<sup>k</sup> + Δα</b>. Пересчитываем J в новой точке (он меняется на каждой итерации) и повторяем до тех пор, пока сумма квадратов перестанет убывать.</li></ol>`},
+ {k:'num', h:'Числа: y = e^{αx}', b:`<p>Данные: (0,1), (1,2), (2,7). Начало α⁰ = 0.5. Здесь f = e<sup>αx</sup>, ∂f/∂α = x·e<sup>αx</sup>.</p>
+ <table class="tbl"><tr><th>x</th><th>f(x,0.5)</th><th>J = x·f</th><th>Δy = y−f</th></tr><tr><td>0</td><td>1.000</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1.649</td><td>1.649</td><td>0.351</td></tr><tr><td>2</td><td>2.718</td><td>5.437</td><td>4.282</td></tr></table>
+ <p>JᵀJ = 1.649² + 5.437² = 32.27; JᵀΔy = 1.649·0.351 + 5.437·4.282 = 23.86. Δα = 23.86/32.27 = <b>0.739</b>, значит α¹ = 1.239 (перелёт). Следующие итерации: α² ≈ 1.028, α³ ≈ 0.969, α⁴ ≈ 0.965 (сходится к ≈ 0.97). SSR по шагам: 18.46 → 26.34 → 1.31 → 0.41. Видно: Gauss–Newton может на первом шаге ухудшить, поэтому важно разумное начальное значение.</p>`},
+ {k:'formula', h:'Что нужно помнить', b:`<table class="sym"><tr><td>JᵀJ Δα = JᵀΔy</td><td>нормальные уравнения шага; при линейной модели J = X и получается обычный OLS за один шаг</td></tr><tr><td>Начальное α⁰</td><td>от него зависит сходимость, иначе возможна расходимость</td></tr><tr><td>Локальные минимумы</td><td>в нелинейном МНК их может быть много (в линейном минимум единственный)</td></tr><tr><td>Остановка</td><td>когда SSR перестаёт убывать или шаг Δα мал</td></tr><tr><td>Якобиан численно</td><td>конечными разностями (J<sub>ij</sub> ≈ [f(α+hε<sub>j</sub>) − f(α)]/h), если аналитически сложно</td></tr></table>`},
+ {k:'quiz', q:'Чему равен размер Якобиана J в подгонке N точек и p параметров?', o:['N×p','p×p','N×N','p×N'], a:0, why:'Строка на каждую точку, столбец на каждый параметр.'},
+ {k:'quiz', q:'В какую задачу превращается каждый шаг Gauss–Newton?', o:['в линейный МНК для поправки Δα','в сортировку','в поиск корня','в нулевую подгонку'], a:0, why:'min‖Δy − JΔα‖², отсюда JᵀJ Δα = JᵀΔy.'},
+ {k:'exam', h:'Ответ «Jacobian / nonlinear least squares»', b:`<ol class="big"><li>Определение Якобиана и его размер.</li><li>Почему нужен итеративный метод (нет closed form).</li><li>Линеаризация по Тейлору и вывод JᵀJΔα = JᵀΔy.</li><li>Алгоритм: начальное α, шаг, обновление, критерий остановки.</li><li>Проблемы: начальное значение, локальные минимумы, необходимость J.</li></ol>`}
+]},
+{id:'gd', title:'8. Градиентный спуск', goal:'Откуда формула шага, когда сходится и с какой скоростью.', cards:[
+ {k:'story', h:'Спуск с холма в тумане', b:`<p>Хотим найти минимум функции f(x). Стоим в точке, видим только наклон (градиент ∇f). Идём в сторону, где круче всего вниз, то есть <b>−∇f</b>, небольшим шагом t. Повторяем.</p>
+ <p><b>x<sub>k+1</sub> = x<sub>k</sub> − t·∇f(x<sub>k</sub>)</b>, t — длина шага (step size / learning rate).</p>`},
+ {k:'num', h:'Числа: f(x,y) = x² + 3y²', b:`<p>∇f = (2x, 6y). Берём t = 0.1, старт (1, 1).</p>
+ <table class="tbl"><tr><th>шаг</th><th>точка</th><th>градиент</th></tr><tr><td>0</td><td>(1, 1)</td><td>(2, 6)</td></tr><tr><td>1</td><td>(1−0.2, 1−0.6) = (0.8, 0.4)</td><td>(1.6, 2.4)</td></tr><tr><td>2</td><td>(0.8−0.16, 0.4−0.24) = (0.64, 0.16)</td><td></td></tr><tr><td>3</td><td>(0.512, 0.064)</td><td></td></tr></table>
+ <p>x умножается на 0.8 = 1 − 0.1·2, y на 0.4 = 1 − 0.1·6 на каждом шаге. Идём к (0, 0). Если взять t = 0.4, то множитель для y равен 1 − 0.4·6 = −1.4, |−1.4| &gt; 1: расходится! Ограничение на t видно из чисел.</p>`},
+ {k:'proof', h:'Вывод 1: почему именно −∇f', b:`<p>Разложение Тейлора: f(x + d) ≈ f(x) + ∇f(x)ᵀd. Среди всех направлений единичной длины ‖d‖ = 1 хотим наименьшее значение ∇fᵀd. По неравенству Коши–Буняковского ∇fᵀd ≥ −‖∇f‖‖d‖, и равенство достигается при <b>d = −∇f/‖∇f‖</b>. Значит антиградиент — направление самого быстрого убывания.</p>
+ <p>Условие убывания: ∇fᵀd &lt; 0. Для d = −∇f это −‖∇f‖² &lt; 0, пока градиент не равен нулю.</p>`},
+ {k:'proof', h:'Вывод 2: условие сходимости и скорость для квадратичной f', b:`<p>Возьмём f(x) = ½xᵀAx − bᵀx с симметричной положительно определённой A (собственные числа 0 &lt; λ<sub>min</sub> ≤ … ≤ λ<sub>max</sub>). Минимум x*: Ax* = b. Градиент ∇f = Ax − b = A(x − x*).</p>
+ <ol class="big"><li>Ошибка e<sub>k</sub> = x<sub>k</sub> − x*. Шаг: e<sub>k+1</sub> = e<sub>k</sub> − tAe<sub>k</sub> = <b>(I − tA)e<sub>k</sub></b>.</li>
+ <li>В базисе собственных векторов A компонента ошибки умножается на (1 − tλ<sub>i</sub>) на каждом шаге.</li>
+ <li><b>Сходимость</b> ⇔ |1 − tλ<sub>i</sub>| &lt; 1 для всех i ⇔ <b>0 &lt; t &lt; 2/λ<sub>max</sub></b>. (В примере λ<sub>max</sub> = 6, значит t &lt; 1/3: 0.1 подходит, 0.4 нет.)</li>
+ <li><b>Лучший шаг:</b> минимизируем max|1 − tλ|: t* = 2/(λ<sub>min</sub> + λ<sub>max</sub>), скорость ‖e<sub>k+1</sub>‖ ≤ ((κ − 1)/(κ + 1))‖e<sub>k</sub>‖, где κ = λ<sub>max</sub>/λ<sub>min</sub> — число обусловленности. Чем более «вытянуты» линии уровня (κ большое), тем медленнее спуск (линейная скорость сходимости).</li></ol>`},
+ {k:'proof', h:'Вывод 3: общий случай, L-гладкость (лемма о спуске)', b:`<p>Пусть ∇f липшицев с константой L: ‖∇f(x) − ∇f(y)‖ ≤ L‖x − y‖. Тогда f(y) ≤ f(x) + ∇f(x)ᵀ(y−x) + (L/2)‖y−x‖². Подставляем y = x − t∇f(x):</p>
+ <p><b>f(x − t∇f) ≤ f(x) − t(1 − Lt/2)‖∇f(x)‖²</b>.</p>
+ <p>При t ≤ 1/L получаем f(x<sub>k+1</sub>) ≤ f(x<sub>k</sub>) − (t/2)‖∇f(x<sub>k</sub>)‖²: функция убывает на каждом шаге. Для выпуклой f с t = 1/L суммирование даёт f(x<sub>k</sub>) − f* ≤ L‖x<sub>0</sub> − x*‖²/(2k), то есть сублинейная скорость O(1/k); для сильно выпуклой f скорость линейная (геометрическая). Именно «linear or sublinear rates», как сказано на лекции.</p>`},
+ {k:'formula', h:'Резюме и улучшения', b:`<table class="sym"><tr><td>x<sub>k+1</sub> = x<sub>k</sub> − t∇f(x<sub>k</sub>)</td><td>базовый метод</td></tr><tr><td>выбор t</td><td>фиксированный (t &lt; 2/L), либо line search (Armijo/Wolfe: подбирать t на каждом шаге)</td></tr><tr><td>Heavy ball</td><td>добавляет «инерцию»: x<sub>k+1</sub> = x<sub>k</sub> − t∇f + β(x<sub>k</sub> − x<sub>k−1</sub>), ускоряет на «оврагах»</td></tr><tr><td>Conjugate gradient</td><td>для квадратичных f: сопряжённые направления, не больше n шагов</td></tr><tr><td>Критерий остановки</td><td>‖∇f‖ мало или f почти не меняется</td></tr></table>`},
+ {k:'quiz', q:'Почему шаг делается по −∇f?', o:['это направление наискорейшего убывания','так проще считать','это направление к максимуму','так требует Ньютон'], a:0, why:'Из Тейлора и неравенства Коши–Буняковского.'},
+ {k:'quiz', q:'f = x² + 3y², λ_max = 6. При каком t гарантированно сходится?', o:['t < 1/3','t < 3','t = 1','любой t'], a:0, why:'0 < t < 2/λ_max = 1/3.'},
+ {k:'exam', h:'Ответ «Gradient descent»', b:`<ol class="big"><li>Цель: min f(x), итерация x<sub>k+1</sub> = x<sub>k</sub> − t∇f(x<sub>k</sub>).</li><li>Вывод: Тейлор + направление наискорейшего убывания.</li><li>Выбор шага: условие t &lt; 2/L, line search.</li><li>Скорость: линейная при сильной выпуклости (κ), O(1/k) иначе.</li><li>Минусы: медленно при плохой обусловленности; улучшения: heavy ball, CG, Newton.</li></ol>`}
+]},
+{id:'newton', title:'9. Метод Ньютона', goal:'Вывод, быстрая (квадратичная) сходимость и сравнение с градиентным спуском.', cards:[
+ {k:'story', h:'Спуск с учётом кривизны', b:`<p>Градиентный спуск знает только наклон. Метод Ньютона знает ещё <b>кривизну</b> (вторые производные, матрица Гессе H<sub>f</sub>) и приближает функцию параболой, а минимум параболы находит сразу.</p>
+ <p>В одном измерении: <b>x<sub>k+1</sub> = x<sub>k</sub> − f′(x<sub>k</sub>)/f″(x<sub>k</sub>)</b>. В многомерном: <b>x<sub>k+1</sub> = x<sub>k</sub> − [H<sub>f</sub>(x<sub>k</sub>)]⁻¹ ∇f(x<sub>k</sub>)</b>. Вектор d = −H⁻¹∇f называют ньютоновским направлением, «естественный» шаг равен 1.</p>`},
+ {k:'num', h:'Числа 1: квадратичная функция, один шаг', b:`<p>f(x,y) = x² + 3y². ∇f = (2x, 6y), H = diag(2, 6), H⁻¹ = diag(1/2, 1/6). Старт (1, 1): ∇f = (2, 6), d = −H⁻¹∇f = −(1, 1). x₁ = (1,1) − (1,1) = <b>(0, 0)</b>. Попали в минимум за <b>один</b> шаг (градиентному спуску из прошлой темы нужно бесконечно много шагов). Для любой квадратичной функции Ньютон сходится за 1 шаг.</p>`},
+ {k:'num', h:'Числа 2: минимизируем f(x) = x − ln x (минимум в x = 1)', b:`<p>f′ = 1 − 1/x, f″ = 1/x². Шаг: x − f′/f″ = x − (1 − 1/x)·x² = 2x − x². Старт 0.5:</p>
+ <table class="tbl"><tr><th>k</th><th>x<sub>k</sub></th><th>ошибка |x<sub>k</sub> − 1|</th></tr><tr><td>0</td><td>0.5</td><td>0.5</td></tr><tr><td>1</td><td>0.75</td><td>0.25</td></tr><tr><td>2</td><td>0.9375</td><td>0.0625</td></tr><tr><td>3</td><td>0.99609</td><td>0.0039</td></tr></table>
+ <p>Ошибка каждый раз возводится в квадрат: 0.25 = 0.5², 0.0625 = 0.25², 0.0039 ≈ 0.0625². Это и есть <b>квадратичная сходимость</b>: число верных цифр удваивается.</p>
+ <p>Корень √2 (ищем f(x) = x² − 2 = 0, шаг x − f/f′ = x − (x²−2)/(2x)): 1 → 1.5 → 1.41667 → 1.414216 (√2 = 1.414214).</p>`},
+ {k:'proof', h:'Вывод формулы Ньютона (как на лекции)', b:`<ol class="big"><li>Берём разложение Тейлора второго порядка вокруг x<sub>k</sub>: f(x<sub>k</sub> + d) ≈ f(x<sub>k</sub>) + ∇f(x<sub>k</sub>)ᵀd + ½dᵀH<sub>f</sub>(x<sub>k</sub>)d =: m(d).</li>
+ <li>Если H положительно определена, m(d) — выпуклая парабола, минимум в точке, где её градиент равен нулю: ∇m(d) = ∇f(x<sub>k</sub>) + H d = 0.</li>
+ <li>Отсюда <b>d = −H⁻¹∇f(x<sub>k</sub>)</b>, и следующая точка x<sub>k+1</sub> = x<sub>k</sub> + d.</li>
+ <li><b>Это направление убывания:</b> ∇fᵀd = −∇fᵀH⁻¹∇f &lt; 0, так как H⁻¹ положительно определена.</li></ol>
+ <p><b>Если H не положительно определена</b> (лекция): направление может не быть направлением убывания или H⁻¹ не существует, поэтому в такой области метод модифицируют (регуляризация H + μI, line search).</p>`},
+ {k:'proof', h:'Вывод: почему сходимость квадратичная (1D, корень f(x) = 0)', b:`<p>Пусть x* — корень, f′(x*) ≠ 0, e<sub>k</sub> = x<sub>k</sub> − x*. Тейлор с остаточным членом: 0 = f(x*) = f(x<sub>k</sub>) + f′(x<sub>k</sub>)(x* − x<sub>k</sub>) + ½f″(ξ)(x* − x<sub>k</sub>)².</p>
+ <p>Делим на f′(x<sub>k</sub>) и переносим: x<sub>k</sub> − f(x<sub>k</sub>)/f′(x<sub>k</sub>) − x* = (f″(ξ)/(2f′(x<sub>k</sub>)))·e<sub>k</sub>². Левая часть это x<sub>k+1</sub> − x*, поэтому</p>
+ <p><b>e<sub>k+1</sub> = [f″(ξ)/(2f′(x<sub>k</sub>))]·e<sub>k</sub>²</b>, то есть |e<sub>k+1</sub>| ≤ C·e<sub>k</sub>².</p>
+ <p>Для минимизации применяем то же к f′ (ищем корень f′ = 0). В многомерном случае на лекции: ‖x<sub>k+1</sub> − x*‖ ≤ (L/m)‖x<sub>k</sub> − x*‖², если Гессиан липшицев (константа L), H(x*) ⪰ mI и старт достаточно близок: ‖x₀ − x*‖ ≤ m/(2L). Метод <b>локально</b> квадратично сходится; глобально без line search может расходиться.</p>`},
+ {k:'formula', h:'Ньютон против градиентного спуска', b:`<table class="tbl"><tr><th></th><th>градиентный спуск</th><th>Ньютон</th></tr><tr><td>информация</td><td>∇f</td><td>∇f и Гессиан H</td></tr><tr><td>скорость</td><td>линейная / сублинейная</td><td>квадратичная вблизи решения</td></tr><tr><td>цена шага</td><td>дёшево, O(n)</td><td>дорого: считать и решать систему с H, около O(n³)</td></tr><tr><td>устойчивость</td><td>глобально сходится при малом t</td><td>нужен хороший старт и H положительно определён</td></tr></table>
+ <p><b>Связь с Якобианом:</b> для системы уравнений F(x) = 0 Ньютон: x<sub>k+1</sub> = x<sub>k</sub> − J⁻¹F(x<sub>k</sub>) (J — Якобиан F). Минимизация f это решение ∇f = 0, а Якобиан от ∇f это и есть Гессиан H. Gauss–Newton (тема 7) = Ньютон для МНК с отброшенным членом со вторыми производными.</p>`},
+ {k:'quiz', q:'За сколько шагов Ньютон минимизирует f = x² + 3y²?', o:['1','2','бесконечно много','10'], a:0, why:'Для квадратичных функций модель m(d) совпадает с f, поэтому минимум за один шаг.'},
+ {k:'quiz', q:'Что значит квадратичная сходимость?', o:['ошибка ~ квадрат предыдущей ошибки','ошибка падает как 1/k²','шаг в квадрате','нужен квадрат Гессиана'], a:0, why:'e_{k+1} ≤ C·e_k²: число верных цифр удваивается.'},
+ {k:'quiz', q:'Главный минус метода Ньютона?', o:['цена Гессиана и его положительная определённость','он медленнее GD','нужен только градиент','он не сходится у квадратичных функций'], a:0, why:'Вычисление и решение системы с H дорого, плюс нужна положительная определённость.'},
+ {k:'exam', h:'Ответ «Newton method»', b:`<ol class="big"><li>Идея: квадратичная модель функции (Тейлор до 2-го порядка).</li><li>Вывод: ∇m = 0 ⇒ d = −H⁻¹∇f, x<sub>k+1</sub> = x<sub>k</sub> + αd (α = 1).</li><li>Условия: H положительно определён (иначе d не убывающее).</li><li>Скорость: локально квадратичная (теорема с L и m), глобально нужен line search (Wolfe).</li><li>Плюсы/минусы относительно GD; пример 1D.</li></ol>`}
+]},
+{id:'pca', title:'10. PCA', goal:'Главные компоненты: что это, как считать и почему это собственные векторы.', cards:[
+ {k:'story', h:'Идея', b:`<p>Данные в многих измерениях, но реально они «вытянуты» вдоль нескольких направлений. PCA (Principal Component Analysis) находит новые оси: первая ось идёт в направлении <b>наибольшего разброса</b>, вторая перпендикулярна ей и берёт наибольший оставшийся разброс, и т.д. Если несколько первых осей объясняют почти всю изменчивость, остальные можно выбросить: меньше измерений, почти без потерь.</p>
+ <p><b>Алгоритм:</b> 1) центрировать данные (вычесть среднее каждой колонки; при разных единицах ещё и поделить на стандартное отклонение); 2) ковариационная матрица C = XᵀX/(N−1); 3) собственные числа λ и векторы v матрицы C; 4) отсортировать по убыванию λ; 5) проекции (scores) T = X V.</p>`},
+ {k:'num', h:'Числа: 4 точки в 2D', b:`<p>Точки (1,2), (2,3), (3,5), (4,6). Средние (2.5; 4). Центрированные: (−1.5,−2), (−0.5,−1), (0.5,1), (1.5,2).</p>
+ <pre class="code">C = [ 1.667  2.333 ]    (var x = 1.667, var y = 3.333, cov = 2.333)
+    [ 2.333  3.333 ]</pre>
+ <p>Собственные числа: <b>λ₁ = 4.978, λ₂ = 0.022</b> (проверка: сумма 5.0 = след C = 1.667 + 3.333). Собственный вектор для λ₁: <b>v₁ = (0.576; 0.817)</b>. Доля объяснённой дисперсии первой компонентой: 4.978/5.0 = <b>99.5%</b>: точки почти лежат на одной прямой. Scores (положение вдоль PC1): −2.50; −1.11; 1.11; 2.50.</p>
+ <p>Как найти λ вручную: det(C − λI) = 0 ⇒ (1.667−λ)(3.333−λ) − 2.333² = 0 ⇒ λ² − 5λ + 0.111 = 0 ⇒ λ = (5 ± √(25−0.444))/2 = 4.978 или 0.022.</p>`},
+ {k:'proof', h:'Вывод: главные компоненты = собственные векторы ковариационной матрицы', b:`<ol class="big"><li>Проекция центрированных данных на единичный вектор w (‖w‖ = 1): z = Xw. Её дисперсия: Var(z) = (1/(N−1))‖Xw‖² = wᵀ[XᵀX/(N−1)]w = <b>wᵀCw</b>.</li>
+ <li>Максимизируем wᵀCw при условии wᵀw = 1. Функция Лагранжа: L = wᵀCw − λ(wᵀw − 1).</li>
+ <li>∂L/∂w = 2Cw − 2λw = 0 ⇒ <b>Cw = λw</b>: w — собственный вектор C.</li>
+ <li>Тогда дисперсия wᵀCw = wᵀλw = <b>λ</b>. Чтобы дисперсия была максимальной, берём <b>наибольшее λ</b>: это PC1.</li>
+ <li>Следующая компонента: максимизируем при дополнительном условии w ⟂ w₁. Так как C симметрична, её собственные векторы ортогональны, получаем второй по величине λ₂ и т.д.</li>
+ <li><b>Итог:</b> сумма всех λ<sub>i</sub> = след C = полная дисперсия, а λ<sub>i</sub>/Σλ — доля объяснённой дисперсии i-й компонентой.</li></ol>
+ <p><b>Связь с SVD:</b> если центрированная X = UΣVᵀ, то столбцы V — главные направления, а λ<sub>i</sub> = σ<sub>i</sub>²/(N−1); scores T = XV = UΣ.</p>`},
+ {k:'formula', h:'Термины', b:`<table class="sym"><tr><td>loadings</td><td>компоненты собственных векторов v: «вклад» исходных переменных в компоненту</td></tr><tr><td>scores</td><td>координаты наблюдений в новых осях: T = XV</td></tr><tr><td>explained variance</td><td>λ<sub>i</sub>/Σλ, кумулятивная доля для выбора числа компонент (напр. до 90–95%)</td></tr><tr><td>scree plot</td><td>график λ<sub>i</sub>, ищем «локоть»</td></tr><tr><td>масштаб</td><td>если переменные в разных единицах, стандартизировать (тогда C это матрица корреляций), иначе PCA «увидит» только переменную с наибольшим масштабом</td></tr></table>`},
+ {k:'quiz', q:'Чему равна сумма собственных чисел ковариационной матрицы?', o:['следу матрицы (полной дисперсии)','определителю','нулю','единице'], a:0, why:'Σλ = tr(C) = сумма дисперсий переменных.'},
+ {k:'quiz', q:'Почему PC1 — собственный вектор с наибольшим λ?', o:['дисперсия проекции равна λ','так принято','он самый длинный','у него определитель максимален'], a:0, why:'Var = wᵀCw = λ для собственного вектора, поэтому максимум дисперсии это максимум λ.'},
+ {k:'exam', h:'Ответ «PCA»', b:`<ol class="big"><li>Цель: снизить размерность, сохранив дисперсию.</li><li>Шаги: центрирование/стандартизация, C, собственные числа и векторы, сортировка.</li><li>Вывод через Лагранжа: Cw = λw.</li><li>Объяснённая дисперсия λ<sub>i</sub>/Σλ, выбор числа компонент (scree, кумулятивная доля).</li><li>Числовой пример 2D и связь с SVD.</li></ol>`}
+]},
+{id:'clu', title:'11. Кластерный анализ', goal:'k-means, иерархическая кластеризация, DBSCAN, оценка качества.', cards:[
+ {k:'story', h:'Идея', b:`<p>Кластеризация (unsupervised) делит объекты на группы так, чтобы внутри группы объекты были похожи, а между группами различались. Правильных ответов заранее нет. Всё начинается с выбора <b>расстояния</b> (лекция Similarity): евклидово √Σ(a<sub>i</sub>−b<sub>i</sub>)², манхэттенское Σ|a<sub>i</sub>−b<sub>i</sub>|, косинусное и др. Выбор метрики влияет на результат.</p>
+ <ul class="big"><li><b>k-means:</b> число кластеров k задаёт пользователь; каждый кластер представлен центроидом (средним).</li><li><b>Иерархическая (AHC):</b> строим дерево слияний (дендрограмму), потом «режем» на нужном уровне.</li><li><b>DBSCAN:</b> кластеры = плотные области, шум выделяется; k не нужен.</li><li><b>Fuzzy c-means:</b> объект принадлежит нескольким кластерам с долями (степенями принадлежности).</li></ul>`},
+ {k:'num', h:'Числа: k-means на 1D, k = 2', b:`<p>Точки 1, 2, 4, 9, 10, 12. Начальные центры c₁ = 1, c₂ = 9.</p>
+ <table class="tbl"><tr><th>итерация</th><th>назначение (к ближайшему)</th><th>новые центры</th></tr><tr><td>1</td><td>{1,2,4} → c₁; {9,10,12} → c₂</td><td>c₁ = 7/3 = 2.333; c₂ = 31/3 = 10.333</td></tr><tr><td>2</td><td>те же кластеры</td><td>центры не изменились: сошлось</td></tr></table>
+ <p>Целевая функция (SSE) = Σ‖x − c‖² = (1.333²+0.333²+1.667²) + (1.333²+0.333²+1.667²) = 4.667 + 4.667 = <b>9.333</b>.</p>`},
+ {k:'proof', h:'Вывод k-means: почему центр = среднее и почему алгоритм сходится', b:`<p>Цель: минимизировать J = Σ<sub>j</sub>Σ<sub>x∈C<sub>j</sub></sub>‖x − c<sub>j</sub>‖².</p>
+ <ol class="big"><li><b>Шаг назначения:</b> при фиксированных центрах каждая точка отнесена к ближайшему центру. Это минимизирует J по назначениям.</li>
+ <li><b>Шаг обновления:</b> при фиксированных кластерах ∂J/∂c<sub>j</sub> = −2Σ<sub>x∈C<sub>j</sub></sub>(x − c<sub>j</sub>) = 0 ⇒ <b>c<sub>j</sub> = (1/|C<sub>j</sub>|)Σx</b>, то есть среднее точек кластера (J выпукла по c<sub>j</sub>, второй производной 2|C<sub>j</sub>| &gt; 0, это минимум).</li>
+ <li>Каждый из двух шагов не увеличивает J, а число разбиений конечно, поэтому алгоритм сходится за конечное число шагов, но только к <b>локальному</b> минимуму: результат зависит от начальных центров (запускают несколько раз, k-means++).</li></ol>
+ <p><b>Варианты из лекции:</b> k-medians (медиана вместо среднего, устойчивее к выбросам), k-medoids (центром служит реальная точка).</p>`},
+ {k:'formula', h:'Иерархическая, DBSCAN, качество', b:`<table class="sym"><tr><td>AHC: single / complete / average / Ward</td><td>расстояние между кластерами: минимум / максимум / среднее попарных / рост внутрикластерной дисперсии. Слияние ближайших пар снизу вверх, потом разрез дендрограммы.</td></tr>
+ <tr><td>DBSCAN (ε, minPts)</td><td>core point: в ε-окрестности ≥ minPts точек; border: в окрестности core, но сам не core; остальные шум. Кластеры могут быть любой формы.</td></tr>
+ <tr><td>Silhouette s = (b − a)/max(a, b)</td><td>a = среднее расстояние до своих, b = среднее расстояние до ближайшего другого кластера; s ∈ [−1,1], чем ближе к 1 тем лучше</td></tr>
+ <tr><td>Elbow</td><td>график SSE от k, берём «локоть»</td></tr></table>
+ <p><b>Числа:</b> в примере выше для точки 1: a = (1+3)/2 = 2, b = (8+9+11)/3 = 9.333, s = (9.333 − 2)/9.333 = <b>0.786</b>: точка хорошо сидит в своём кластере. Single linkage на тех же точках: сначала сливаются пары с расстоянием 1 ((1,2) и (9,10)), затем 4 с {1,2} и 12 с {9,10} (расстояние 2), последним сливаются два кластера на расстоянии 5 (между 4 и 9): на дендрограмме большой скачок высоты подсказывает k = 2.</p>`},
+ {k:'quiz', q:'Чему равен центроид k-means для кластера {1, 2, 4}?', o:['7/3 ≈ 2.33','2','4','1'], a:0, why:'Среднее: (1+2+4)/3 = 7/3.'},
+ {k:'quiz', q:'Чем DBSCAN отличается от k-means?', o:['не требует k и находит шум и кластеры любой формы','всегда быстрее','работает только с 1D','использует центроиды'], a:0, why:'Параметры ε и minPts вместо k.'},
+ {k:'exam', h:'Ответ «Cluster analysis»', b:`<ol class="big"><li>Цель и отсутствие меток; расстояния/сходство.</li><li>Основные семейства: разбиения (k-means, k-medoids), иерархические (AHC, linkage, дендрограмма), плотностные (DBSCAN), fuzzy.</li><li>k-means: шаги, целевая функция, вывод среднего, локальный минимум.</li><li>Оценка: silhouette, elbow; выбор k.</li><li>Мини-пример 1D (как выше).</li></ol>`}
+]},
+{id:'surv', title:'12. Survival analysis', goal:'Анализ выживаемости: функции S(t), h(t), кривая Каплана–Майера.', ext:true, cards:[
+ {k:'story', h:'Тема вне присланных слайдов', b:`<p class="warn"><b>Важно:</b> в лекциях, которые ты прислал (1–7), анализа выживаемости нет: это отдельный блок (в твоём списке «Survival analysis (Davide)»). Ниже стандартная теория по классическим определениям. Если у Davide другие обозначения, держись их, а мои определения используй как основу.</p>
+ <p><b>Задача:</b> изучать время до события (смерть, поломка, уход клиента, рецидив). Особенность: <b>цензурирование (censoring)</b>. К концу наблюдения у части объектов событие ещё не произошло, мы знаем только «дожил хотя бы до t». Обычные средние и регрессия здесь неправильны, нужны специальные методы.</p>`},
+ {k:'formula', h:'Основные функции', b:`<table class="sym"><tr><td>T</td><td>время до события (случайная величина ≥ 0)</td></tr><tr><td>S(t) = P(T &gt; t)</td><td>функция выживания: доля, дожившая дольше t. S(0) = 1, невозрастающая</td></tr><tr><td>F(t) = 1 − S(t)</td><td>функция распределения (событие уже случилось)</td></tr><tr><td>f(t) = −S′(t)</td><td>плотность</td></tr><tr><td>h(t) = f(t)/S(t)</td><td>функция риска (hazard): мгновенный риск события в момент t для тех, кто дожил до t</td></tr><tr><td>H(t) = ∫₀ᵗ h(u)du</td><td>кумулятивный риск; S(t) = e<sup>−H(t)</sup></td></tr></table>`},
+ {k:'proof', h:'Вывод S(t) = exp(−H(t))', b:`<p>h(t) = f(t)/S(t) = −S′(t)/S(t) = −d/dt ln S(t). Интегрируем от 0 до t: ∫h = −[ln S(t) − ln S(0)] = −ln S(t), так как S(0) = 1. Значит <b>S(t) = exp(−∫₀ᵗh(u)du) = e<sup>−H(t)</sup></b>.</p>
+ <p><b>Пример:</b> постоянный риск h = λ (экспоненциальное распределение): H = λt, S(t) = e<sup>−λt</sup>, медиана выживаемости t<sub>med</sub> = ln 2/λ.</p>`},
+ {k:'num', h:'Числа: оценка Каплана–Майера', b:`<p>6 пациентов: событие в моменты 2, 3, 5, 8; цензурированы в 4 и 7 (выбыли из наблюдения без события).</p>
+ <table class="tbl"><tr><th>время t</th><th>n (в риске)</th><th>d (событий)</th><th>1 − d/n</th><th>S(t)</th></tr>
+ <tr><td>2</td><td>6</td><td>1</td><td>5/6</td><td>0.833</td></tr><tr><td>3</td><td>5</td><td>1</td><td>4/5</td><td>0.667</td></tr><tr><td>4 (цензура)</td><td>4→3</td><td>0</td><td>—</td><td>0.667</td></tr><tr><td>5</td><td>3</td><td>1</td><td>2/3</td><td>0.444</td></tr><tr><td>7 (цензура)</td><td>2→1</td><td>0</td><td>—</td><td>0.444</td></tr><tr><td>8</td><td>1</td><td>1</td><td>0</td><td>0</td></tr></table>
+ <p><b>Медиана выживаемости</b> = первое t, где S(t) ≤ 0.5: здесь t = 5 (S падает до 0.444). Цензурированные не дают скачка, но уменьшают число «в риске» n.</p>`},
+ {k:'formula', h:'Формула Каплана–Майера и «какие линии» на графиках', b:`<p><b>Ŝ(t) = Π<sub>t<sub>i</sub> ≤ t</sub> (1 − d<sub>i</sub>/n<sub>i</sub>)</b>, где t<sub>i</sub> — моменты событий, d<sub>i</sub> — число событий в t<sub>i</sub>, n<sub>i</sub> — сколько в риске непосредственно перед t<sub>i</sub>. Смысл: вероятность дожить до t = произведение условных вероятностей «пережить каждый момент события».</p>
+ <p><b>Какие линии рисуют (вопрос из списка):</b></p>
+ <ul class="big"><li><b>Кривая Каплана–Майера:</b> ступенчатая функция, начинается с 1, на каждом событии скачок вниз, между событиями горизонтальна, не растёт; метки (тики) на кривой показывают цензурированных. Может не дойти до 0, если последний объект цензурирован. По ней находят медиану (линия S = 0.5).</li>
+ <li><b>Доверительные интервалы/полосы:</b> две линии вокруг кривой (формула Гринвуда для дисперсии), шире там, где мало «в риске».</li>
+ <li><b>Кумулятивный риск H(t) (Nelson–Aalen):</b> ступенчатая возрастающая линия; <b>функция риска h(t)</b> (сглаженная) может быть постоянной (экспоненциальная), возрастающей (Weibull, износ), убывающей, ванной (bathtub).</li>
+ <li><b>Сравнение групп:</b> несколько кривых KM на одном графике (лечение и контроль), различие проверяют <b>log-rank тестом</b>; зависимость от ковариат моделирует <b>Cox proportional hazards</b>: h(t|x) = h₀(t)·e<sup>β·x</sup>.</li></ul>`},
+ {k:'quiz', q:'Что такое цензурирование?', o:['объект к концу наблюдения без события: известно только, что T > t','ошибка измерения','удаление выбросов','событие произошло дважды'], a:0, why:'Это неполная информация о времени события, но не пропуск данных.'},
+ {k:'quiz', q:'Как выглядит кривая Каплана–Майера?', o:['ступенчатая невозрастающая функция от 1','гладкая возрастающая','колокол','прямая'], a:0, why:'Скачки вниз в моменты событий.'},
+ {k:'quiz', q:'Как ведёт себя S(t) со временем?', o:['не возрастает, начиная с S(0) = 1','возрастает от 0 до 1','колеблется около 0.5','всегда равна 1'], a:0, why:'S(t) = P(T > t): с ростом t всё меньше доживших.'},
+ {k:'exam', h:'Ответ «Survival analysis»', b:`<ol class="big"><li>Время до события, цензурирование.</li><li>S(t), F(t), f(t), h(t), H(t); связь S = e<sup>−H</sup>.</li><li>Оценка Каплана–Майера, формула и числовой пример.</li><li>Линии на графиках: ступенчатая KM-кривая, ДИ, кумулятивный риск; медиана.</li><li>Сравнение групп: log-rank, Cox.</li></ol>`}
+]}
+];
+
+TOPICS.forEach(t=>{if(ANS[t.id])t.cards.push({k:'exam',h:'Эталонный ответ (так можно писать на экзамене)',b:ANS[t.id]});});
+
+const TOPICS_EN=TOPICS;
+
+const UI={ru:{topics:'Темы',of:'Тема %1 из %2',kinds:{story:'Простыми словами',num:'Сначала числа',formula:'Формула по буквам',quiz:'Проверь себя',exam:'Как отвечать на экзамене',proof:'Вывод формулы'},sub:'12 тем: объяснения, числа, формулы и их вывод, эталонные ответы.',ttl:'MMMDS · полный курс',full:'← Подробный курс и тренажёр кода',hub:'← Study hub',prev:'← Назад',next:'Дальше →',finish:'Закончить тему',right:'Верно. ',wrong:'Не совсем. ',passed:'Тема «%1» пройдена',score:'Вопросы: %1 из %2 с первой попытки.',again:'Пройти заново',goto:'Дальше: %1 →'},
+en:{topics:'Topics',of:'Topic %1 of %2',kinds:{story:'In plain words',num:'Numbers first',formula:'Formula symbol by symbol',quiz:'Check yourself',exam:'How to answer in the exam',proof:'Derivation'},sub:'12 topics: explanations, numbers, formulas with derivations, model answers.',ttl:'MMMDS · full course',full:'← Full course and code trainer',hub:'← Study hub',prev:'← Back',next:'Next →',finish:'Finish topic',right:'Correct. ',wrong:'Not quite. ',passed:'Topic "%1" completed',score:'Questions: %1 of %2 right on the first try.',again:'Start over',goto:'Next: %1 →'}};
+const f=(s,...a)=>s.replace(/%(\d)/g,(m,i)=>a[i-1]);
+let lang='ru';try{lang=localStorage.getItem('study-lang')==='en'?'en':'ru'}catch(e){}
+const KEY='mmmds-easy-v1';
+let S={pos:{},quiz:{},done:{}};try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const T=()=>lang==='en'?TOPICS_EN:TOPICS, U=()=>UI[lang];
+let cur=TOPICS[0].id;
+const side=document.getElementById('side'),view=document.getElementById('view');
+function qkey(t,i){return t.id+':'+i}
+function renderSide(){
+  side.innerHTML=`<div class="ttl">${U().ttl}</div>`+T().map((t,i)=>`<a data-id="${t.id}" class="${t.id===cur?'on':''} ${S.done[t.id]?'done':''}"><span class="n">${S.done[t.id]?'✓':i+1}</span>${t.title}</a>`).join('')+
+  `<div class="links"><a href="mmds.html">${U().full}</a><a href="index.html">${U().hub}</a></div>`;
+  side.querySelectorAll('a[data-id]').forEach(a=>a.onclick=()=>{go(a.dataset.id);side.classList.remove('open')});
+  document.getElementById('menu').textContent='☰ '+U().topics;
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
+  document.documentElement.lang=lang;
+}
+function go(id,keepScroll){cur=id;S.last=id;save();try{history.replaceState(null,'','#'+id)}catch(e){}render();renderSide();if(!keepScroll)window.scrollTo(0,0)}
+function render(){
+  const Ts=T(),t=Ts.find(x=>x.id===cur),i=S.pos[t.id]||0,c=t.cards[Math.min(i,t.cards.length-1)],u=U();
+  const dots=t.cards.map((_,j)=>`<i class="${j<i?'ok':j===i?'on':''}"></i>`).join('');
+  const last=i>=t.cards.length;let body='';
+  if(last){
+    const nxt=Ts[Ts.indexOf(t)+1];
+    const qs=t.cards.map((c,j)=>[c,j]).filter(x=>x[0].k==='quiz');
+    const right=qs.filter(([c,j])=>S.quiz[qkey(t,j)]===c.a).length;
+    body=`<div class="card fin"><div class="big">✓</div><h3>${f(u.passed,t.title)}</h3><p>${f(u.score,right,qs.length)}</p><div class="nav" style="justify-content:center"><button class="btn ghost" id="again">${u.again}</button>${nxt?`<button class="btn" id="nxt">${f(u.goto,nxt.title)}</button>`:''}</div></div>`;
+  } else if(c.k==='quiz'){
+    const a=S.quiz[qkey(t,i)];
+    body=`<div class="card"><span class="kind k-quiz">${u.kinds.quiz}</span><div class="q">${c.q}</div>${c.o.map((o,j)=>`<button class="opt ${a!==undefined?(j===c.a?'good':j===a?'bad':''):''}" data-j="${j}" ${a!==undefined?'disabled':''}>${o}</button>`).join('')}${a!==undefined?`<div class="why"><b>${a===c.a?u.right:u.wrong}</b>${c.why}</div>`:''}</div>`;
+  } else body=`<div class="card"><span class="kind k-${c.k}">${u.kinds[c.k]}</span><h3>${c.h}</h3>${c.b}</div>`;
+  const canNext=last||!(c.k==='quiz'&&S.quiz[qkey(t,i)]===undefined);
+  view.innerHTML=`<div class="tag">${f(u.of,Ts.indexOf(t)+1,Ts.length)}</div><h2 class="tp">${t.title}</h2><p class="goal">${t.goal}</p><div class="dots">${dots}</div>${body}${last?'':`<div class="nav"><button class="btn ghost" id="prev" ${i===0?'disabled':''}>${u.prev}</button><button class="btn" id="next" ${canNext?'':'disabled'}>${i===t.cards.length-1?u.finish:u.next}</button></div>`}`;
+  view.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{S.quiz[qkey(t,i)]=+b.dataset.j;save();render()});
+  const nx=document.getElementById('next');if(nx)nx.onclick=()=>{S.pos[t.id]=i+1;if(i+1>=t.cards.length)S.done[t.id]=true;save();render();renderSide();window.scrollTo(0,0)};
+  const pv=document.getElementById('prev');if(pv)pv.onclick=()=>{S.pos[t.id]=Math.max(0,i-1);save();render()};
+  const ag=document.getElementById('again');if(ag)ag.onclick=()=>{S.pos[t.id]=0;t.cards.forEach((c,j)=>delete S.quiz[qkey(t,j)]);save();render()};
+  const nt=document.getElementById('nxt');if(nt)nt.onclick=()=>go(Ts[Ts.indexOf(t)+1].id);
+}
+document.getElementById('menu').onclick=()=>side.classList.toggle('open');
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;try{localStorage.setItem('study-lang',lang)}catch(e){}renderSide();render()});
+const h=(location.hash||'').slice(1);
+if(TOPICS.some(t=>t.id===h))cur=h;else if(S.last&&TOPICS.some(t=>t.id===S.last))cur=S.last;
+window.addEventListener('hashchange',()=>{const x=location.hash.slice(1);if(TOPICS.some(t=>t.id===x)&&x!==cur)go(x)});
+renderSide();render();
+</script></body></html>
